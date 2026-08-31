@@ -273,8 +273,8 @@ export function WorldMap({
               ))}
             </dl>
           ) : (
-            <span className="type-data mt-1 block text-chalk-muted">
-              No market open yet
+            <span className="type-data mt-1 block text-gold">
+              Open — no market yet
             </span>
           )}
         </div>
@@ -289,7 +289,7 @@ export function WorldMap({
         {[
           ["Grid", `${parcels.length} plots`],
           ["Projection", "Equal Earth"],
-          ["Key", "Gold = open market · brighter = more activity"],
+          ["Status", "Every plot open · none taken"],
         ].map(([key, value]) => (
           <div key={key} className="flex items-baseline gap-2">
             <dt className="type-label text-chalk-muted">{key}</dt>

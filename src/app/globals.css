@@ -203,8 +203,26 @@ body {
   outline-offset: 2px;
 }
 
+/* Genesis ticker. Duplicated content scrolls one full copy, then loops. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 42s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .animate-ticker {
+    animation: none;
   }
 }
