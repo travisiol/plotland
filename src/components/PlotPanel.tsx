@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useConnect, useConnection } from "wagmi";
+import { useConnection } from "wagmi";
 import { Button } from "@/components/ui/Button";
+import { WalletConnect } from "@/components/WalletConnect";
 import { Label } from "@/components/ui/Label";
 import type { Parcel } from "@/lib/parcels";
 import {
@@ -68,7 +69,6 @@ export function PlotPanel({
   onClose: () => void;
 }) {
   const { isConnected } = useConnection();
-  const { connect, connectors, isPending: isConnecting } = useConnect();
   const { marketFor } = useWorld();
   const [tab, setTab] = useState<"holders" | "about">("holders");
 
@@ -150,15 +150,10 @@ export function PlotPanel({
 
             <div className="mt-5 grid grid-cols-2 gap-3">
               {!isConnected ? (
-                <Button
-                  className="col-span-2"
-                  disabled={!connectors[0] || isConnecting}
-                  onClick={() =>
-                    connectors[0] && connect({ connector: connectors[0] })
-                  }
-                >
-                  {isConnecting ? "Connecting…" : "Connect wallet"}
-                </Button>
+                <WalletConnect
+                  wrapperClassName="col-span-2 w-full"
+                  className="w-full justify-center px-4 py-3 text-center"
+                />
               ) : (
                 <>
                   <Button disabled={!canClaim}>Buy plot</Button>
@@ -268,15 +263,10 @@ export function PlotPanel({
           </div>
 
           {!isConnected ? (
-            <Button
-              className="mt-5 w-full"
-              disabled={!connectors[0] || isConnecting}
-              onClick={() =>
-                connectors[0] && connect({ connector: connectors[0] })
-              }
-            >
-              {isConnecting ? "Connecting…" : "Connect wallet"}
-            </Button>
+            <WalletConnect
+              wrapperClassName="mt-5 w-full"
+              className="w-full justify-center px-4 py-3 text-center"
+            />
           ) : (
             <Button className="mt-5 w-full" disabled={!canClaim}>
               Open this market
