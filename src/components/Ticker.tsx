@@ -15,9 +15,10 @@ export function Ticker() {
 
   const lines = isPreview
     ? [
-        "Preview — an example of a world in motion",
-        `${totals.livePlots} plots trading, ${totals.totalPlots - totals.livePlots} still open`,
-        "Green plots are the crowded ones",
+        "Preview — an example of a world a few days old",
+        `${totals.livePlots} plots opened, ${totals.totalPlots - totals.livePlots} still untouched`,
+        `${totals.owners} wallets in so far`,
+        "Green marks the plot with the most owners",
         "Nothing here is live; no contract is deployed",
       ]
     : [

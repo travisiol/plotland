@@ -35,7 +35,12 @@ export function Navbar() {
 
   const chips = [
     { key: "Plots", value: String(totals.totalPlots) },
-    { key: "Claimed", value: `${totals.claimedPct}%` },
+    {
+      key: "Claimed",
+      // 3 of 999 is 0.3%, not 0% — round to whole numbers only once there
+      // is a whole number to show.
+      value: `${totals.claimedPct > 0 && totals.claimedPct < 1 ? totals.claimedPct.toFixed(1) : totals.claimedPct.toFixed(0)}%`,
+    },
     { key: "Owners", value: totals.owners.toLocaleString("en-US") },
   ];
 

@@ -22,7 +22,7 @@ export function World() {
   const [selected, setSelected] = useState<Parcel | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [wide, setWide] = useState(true);
-  const { isPreview, setPreview, totals } = useWorld();
+  const { isPreview, setPreview, totals, marketFor } = useWorld();
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1024px)");
@@ -38,6 +38,18 @@ export function World() {
    * right edge, and lifted into the top half on a narrow one so the copy
    * has the bottom to itself. Nothing is ever read on top of the globe.
    */
+  /*
+   * With three plots opened out of 999, hunting for one by spinning the
+   * globe is not a game anyone wins. When any plot has a market, this
+   * button goes to one of those; otherwise it opens any plot, which is
+   * still the fastest way to show that the globe is clickable.
+   */
+  const openAPlot = () => {
+    const opened = parcels.filter((parcel) => marketFor(parcel.id).isLive);
+    const pool = opened.length > 0 ? opened : parcels;
+    setSelected(pool[Math.floor(Math.random() * pool.length)]);
+  };
+
   const bias = wide ? (selected ? 0.34 : 0.66) : 0.5;
   const biasY = wide ? 0.5 : 0.32;
 
@@ -72,7 +84,9 @@ export function World() {
       {!selected && (
         <div className="pointer-events-none absolute inset-x-0 bottom-12 px-4 sm:px-8 lg:inset-y-0 lg:right-auto lg:flex lg:w-[46%] lg:items-center">
           <div className="pitch pointer-events-auto w-full max-w-[520px]">
-            <Label className="text-gold">Genesis · Ethereum</Label>
+            <Label className="text-gold">
+              {isPreview ? "Preview" : "Genesis"} · Ethereum
+            </Label>
 
             <h1 className="type-hero wordmark-outline mt-4 text-chalk">
               Plotland
@@ -87,7 +101,7 @@ export function World() {
             </p>
             <p className="type-body mt-3 max-w-[46ch] text-chalk">
               {isPreview
-                ? "You are looking at an example of a world in motion. Green plots are the crowded ones."
+                ? `An example of a world a few days old: ${totals.livePlots} plots opened, ${totals.owners} wallets in so far. Green marks the plot with the most owners.`
                 : `The globe is empty. All ${totals.totalPlots} plots are open, none are taken, and whoever gets there first picks first.`}
             </p>
 
@@ -106,20 +120,7 @@ export function World() {
             </dl>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {/*
-                Not a link — there is nothing to scroll to. It opens a plot,
-                which is the fastest way to show a first-time visitor that
-                the globe is something you click.
-              */}
-              <Button
-                onClick={() =>
-                  setSelected(
-                    parcels[Math.floor(Math.random() * parcels.length)],
-                  )
-                }
-              >
-                Open a plot
-              </Button>
+              <Button onClick={openAPlot}>Open a plot</Button>
               <Button variant="outline" onClick={() => setInfoOpen(true)}>
                 How it works
               </Button>
@@ -146,11 +147,21 @@ export function World() {
         <div className="pointer-events-none absolute inset-x-0 bottom-12 hidden px-4 sm:block sm:px-8">
           <div className="pointer-events-auto flex flex-wrap items-center gap-3">
             <Label className="text-chalk-muted">
-              Ethereum · {totals.livePlots} / {totals.totalPlots} plots taken
+              {isPreview ? "Preview" : "Ethereum"} · {totals.livePlots} /{" "}
+              {totals.totalPlots} plots taken
             </Label>
             <Button variant="outline" onClick={() => setInfoOpen(true)}>
               How it works
             </Button>
+            {isPreview && (
+              <Button
+                variant="outline"
+                className="border-gold text-gold"
+                onClick={() => setPreview(false)}
+              >
+                Exit preview
+              </Button>
+            )}
           </div>
         </div>
       )}

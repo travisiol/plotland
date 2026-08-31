@@ -2,7 +2,7 @@ import { parcels } from "@/lib/parcels";
 import type { PlotMarket } from "@/lib/market";
 
 /*
- * A worked example of a living world.
+ * A worked example of a world a few days old.
  *
  * Nothing here is real and nothing here is ever shown unless a visitor asks
  * for it: it sits behind an explicit "preview a live world" control so the
@@ -10,9 +10,24 @@ import type { PlotMarket } from "@/lib/market";
  * anybody has invested. The default state of the site remains the truth —
  * 999 plots open, none taken.
  *
- * Figures are derived from the plot id so the same plot always shows the
- * same example, and so server and client render identically.
+ * Scale matters as much as honesty here. Three plots opened, a handful of
+ * wallets in each, market caps in the low thousands: a fresh project that
+ * showed sixty thousand owners would be advertising a lie about its size
+ * even with the word "preview" over it.
  */
+
+/** The three opened plots, ~120° apart so one is always on the near side. */
+const OPENED = [
+  { id: 303, owners: 7, marketCapUsd: 14_200, volume24hUsd: 1_342, change: 12.4 },
+  { id: 614, owners: 5, marketCapUsd: 8_600, volume24hUsd: 610, change: -6.8 },
+  { id: 845, owners: 4, marketCapUsd: 5_400, volume24hUsd: 388, change: 3.1 },
+] as const;
+
+/** Fixed supply per plot, so price falls out of the cap rather than the reverse. */
+const SUPPLY = 1_000_000;
+
+/** Owner count at which a plot is drawn green rather than gold. */
+export const CROWDED_OWNERS = 6;
 
 function hash(seed: number): () => number {
   let state = (seed * 2654435761) >>> 0;
@@ -45,95 +60,82 @@ const NAMES = [
   "quietharbor",
   "northfell",
   "slatecrown",
-  "duskmeridian",
-  "ironvale",
 ] as const;
 
+/**
+ * With only a handful of wallets in a plot they hold all of it between
+ * them, so the shares are drawn to sum to exactly 100 and every owner is
+ * listed. No "and 240 others" tail to hide behind.
+ */
 function makeHolders(rand: () => number, owners: number): PreviewHolder[] {
-  const count = Math.min(5, owners);
-  const holders: PreviewHolder[] = [];
-  let remaining = 62;
-  for (let i = 0; i < count; i += 1) {
-    const share = i === count - 1 ? remaining : remaining * (0.34 + rand() * 0.2);
-    remaining -= share;
+  const weights = Array.from({ length: owners }, () => 0.35 + rand());
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const shares = weights.map((weight) => (weight / total) * 100);
+
+  const holders = shares.map((share) => {
     const hex = Math.floor(rand() * 0xffffff)
       .toString(16)
       .padStart(6, "0");
     const tail = Math.floor(rand() * 0xffff)
       .toString(16)
       .padStart(4, "0");
-    holders.push({
+    return {
       handle: `${NAMES[Math.floor(rand() * NAMES.length)]}-${Math.floor(rand() * 90) + 10}`,
       address: `0x${hex}…${tail}`,
       share: Math.round(share * 100) / 100,
-      joinedDaysAgo: Math.floor(rand() * 12) + 1,
-    });
-  }
+      joinedDaysAgo: Math.floor(rand() * 5) + 1,
+    };
+  });
+
   return holders.sort((a, b) => b.share - a.share);
 }
 
-function build(id: number): PreviewMarket {
-  const rand = hash(id);
-  const roll = rand();
-  const isLive = roll < 0.26;
-
-  if (!isLive) {
-    return {
-      id,
-      isLive: false,
-      activity: 0,
-      priceUsd: 0,
-      change24h: 0,
-      marketCapUsd: 0,
-      volume24hUsd: 0,
-      owners: 0,
-      rewardsUsd: 0,
-      topHolders: [],
-      holders: [],
-    };
-  }
-
-  // Power law: most open plots are quiet, a handful carry real traffic.
-  const heat = Math.pow(rand(), 2.6);
-  const owners = Math.max(3, Math.round(4 + heat * 900 + rand() * 40));
-  const priceUsd = 0.004 + heat * 2.4 + rand() * 0.02;
-  const volume24hUsd = Math.round(120 + heat * 240_000 + rand() * 900);
-  const marketCapUsd = Math.round(priceUsd * (200_000 + heat * 3_000_000));
-  const rewardsUsd = Math.round(volume24hUsd * 0.018 * (1 + rand() * 3));
-  const change24h = (rand() - 0.42) * (12 + heat * 60);
-  const holders = makeHolders(rand, owners);
-
+function unopened(id: number): PreviewMarket {
   return {
     id,
-    isLive: true,
-    activity: heat,
-    priceUsd,
-    change24h,
-    marketCapUsd,
-    volume24hUsd,
-    owners,
-    rewardsUsd,
-    topHolders: holders.slice(0, 3).map((holder) => holder.share),
-    holders,
+    isLive: false,
+    activity: 0,
+    priceUsd: 0,
+    change24h: 0,
+    marketCapUsd: 0,
+    volume24hUsd: 0,
+    owners: 0,
+    rewardsUsd: 0,
+    topHolders: [],
+    holders: [],
   };
 }
 
 const byId = new Map<number, PreviewMarket>();
-for (const parcel of parcels) byId.set(parcel.id, build(parcel.id));
+const peak = Math.max(...OPENED.map((plot) => plot.volume24hUsd));
 
-export function previewMarketFor(id: number): PreviewMarket {
-  return byId.get(id) ?? build(id);
+for (const plot of OPENED) {
+  const rand = hash(plot.id);
+  const holders = makeHolders(rand, plot.owners);
+  byId.set(plot.id, {
+    id: plot.id,
+    isLive: true,
+    activity: plot.volume24hUsd / peak,
+    priceUsd: plot.marketCapUsd / SUPPLY,
+    change24h: plot.change,
+    marketCapUsd: plot.marketCapUsd,
+    volume24hUsd: plot.volume24hUsd,
+    owners: plot.owners,
+    // Fees the plot has thrown off since it opened: a 1% trading fee over a
+    // few days of the volume above, not a headline number.
+    rewardsUsd: Math.round(plot.volume24hUsd * 0.01 * (2 + rand() * 2)),
+    topHolders: holders.slice(0, 3).map((holder) => holder.share),
+    holders,
+  });
 }
 
-const live = [...byId.values()].filter((market) => market.isLive);
+export function previewMarketFor(id: number): PreviewMarket {
+  return byId.get(id) ?? unopened(id);
+}
 
-/** Owner count at which a plot is considered crowded and drawn in green. */
-export const CROWDED_OWNERS = 120;
+const live = [...byId.values()];
 
-export const previewPeakActivity = live.reduce(
-  (max, market) => Math.max(max, market.activity),
-  0.0001,
-);
+export const previewPeakActivity = 1;
 
 export const previewTotals = {
   totalPlots: parcels.length,
@@ -141,5 +143,5 @@ export const previewTotals = {
   owners: live.reduce((sum, market) => sum + market.owners, 0),
   volume24hUsd: live.reduce((sum, market) => sum + market.volume24hUsd, 0),
   rewardsUsd: live.reduce((sum, market) => sum + market.rewardsUsd, 0),
-  claimedPct: Math.round((live.length / parcels.length) * 100),
+  claimedPct: (live.length / parcels.length) * 100,
 };

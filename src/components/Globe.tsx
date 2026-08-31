@@ -77,7 +77,7 @@ export function Globe({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState<Parcel | null>(null);
-  const { marketFor, peakActivity } = useWorld();
+  const { marketFor, peakActivity, totals } = useWorld();
 
   // Rotation lives in refs, not state: it changes every frame and must not
   // drag React through a re-render each time.
@@ -440,7 +440,12 @@ export function Globe({
       <dl className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-rule px-4 py-2 sm:flex">
         {[
           ["Grid", `${parcels.length} plots`],
-          ["Status", "Every plot open · none taken"],
+          [
+            "Status",
+            totals.livePlots === 0
+              ? "Every plot open · none taken"
+              : `${totals.livePlots} opened · ${totals.totalPlots - totals.livePlots} still open`,
+          ],
           ["Controls", "Drag to spin · click a plot"],
         ].map(([key, value]) => (
           <div key={key} className="flex items-baseline gap-2">

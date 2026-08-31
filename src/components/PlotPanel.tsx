@@ -91,7 +91,7 @@ export function PlotPanel({
                     : "border-gold text-gold"
                 }`}
               >
-                {crowded ? "Crowded" : "Open market"}
+                {crowded ? "Most owners" : "Open market"}
               </span>
             ) : (
               <span className="type-label border border-rule px-2 py-1 text-chalk-muted">
@@ -143,8 +143,8 @@ export function PlotPanel({
             <div className="border-l-2 border-gold bg-field px-4 py-3">
               <Label className="block text-gold">You hold none of this plot</Label>
               <p className="type-body mt-1.5 text-chalk-soft">
-                {market.owners} wallets already hold it between them. Buying in
-                gives you a share alongside them, not the plot itself.
+                {market.owners} wallets hold it between them. Buying in gives
+                you a share alongside them, not the plot itself.
               </p>
             </div>
 
@@ -224,11 +224,12 @@ export function PlotPanel({
                   </li>
                 ))}
               </ul>
-              <p className="type-data mt-3 text-chalk-muted">
-                And{" "}
-                {Math.max(0, market.owners - market.holders.length)} more
-                wallets holding the rest between them.
-              </p>
+              {market.owners > market.holders.length && (
+                <p className="type-data mt-3 text-chalk-muted">
+                  And {market.owners - market.holders.length} more wallets
+                  holding the rest between them.
+                </p>
+              )}
             </div>
           ) : (
             <div className="px-5 py-5">
