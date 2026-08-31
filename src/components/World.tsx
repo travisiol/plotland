@@ -97,11 +97,6 @@ export function World() {
               own market, so one plot can be held by hundreds of people at
               once — you included.
             </p>
-            <p className="type-body mt-3 max-w-[46ch] text-chalk">
-              A world a few days old: {totals.livePlots} plots opened,{" "}
-              {totals.owners} wallets in so far. Green marks the plot with the
-              most owners.
-            </p>
 
             <dl className="mt-6 flex flex-wrap gap-2">
               {pills.map((pill) => (
