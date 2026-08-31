@@ -5,6 +5,7 @@ import { Globe } from "@/components/Globe";
 import { InfoOverlay } from "@/components/InfoOverlay";
 import { PlotPanel } from "@/components/PlotPanel";
 import { Ticker } from "@/components/Ticker";
+import { WalletConnect } from "@/components/WalletConnect";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { parcels, type Parcel } from "@/lib/parcels";
@@ -114,6 +115,7 @@ export function World() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Button onClick={openAPlot}>Open a plot</Button>
+              <WalletConnect className="border border-rule-strong px-4 py-3 text-chalk hover:border-gold hover:text-gold" />
               <Button variant="outline" onClick={() => setInfoOpen(true)}>
                 How it works
               </Button>
