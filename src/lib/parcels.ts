@@ -20,6 +20,8 @@ export interface Parcel {
   y: number;
   lon: number;
   lat: number;
+  /** The six lattice corners, unprojected. Six [lon, lat] pairs. */
+  corners: [number, number][];
   country: string;
   continent: string;
   land: number;
@@ -48,33 +50,6 @@ function toVector(lonDeg: number, latDeg: number): [number, number, number] {
   return [cosLat * Math.sin(lon), Math.sin(lat), cosLat * Math.cos(lon)];
 }
 
-/**
- * Walks `distance` radians from a point along a bearing, over the sphere.
- * Used to place the six corners of a plot around its centre so hexes stay
- * the same size wherever they sit — including at the poles, where a
- * lat/lon offset would smear them into slivers.
- */
-function destination(
-  lonDeg: number,
-  latDeg: number,
-  bearing: number,
-  distance: number,
-): [number, number] {
-  const lat1 = latDeg * DEG;
-  const lon1 = lonDeg * DEG;
-  const sinLat2 =
-    Math.sin(lat1) * Math.cos(distance) +
-    Math.cos(lat1) * Math.sin(distance) * Math.cos(bearing);
-  const lat2 = Math.asin(Math.max(-1, Math.min(1, sinLat2)));
-  const lon2 =
-    lon1 +
-    Math.atan2(
-      Math.sin(bearing) * Math.sin(distance) * Math.cos(lat1),
-      Math.cos(distance) - Math.sin(lat1) * sinLat2,
-    );
-  return [lon2 / DEG, lat2 / DEG];
-}
-
 /** Plot centres as unit vectors, in parcel order. */
 export const parcelCentres = new Float64Array(parcels.length * 3);
 parcels.forEach((parcel, index) => {
@@ -84,24 +59,23 @@ parcels.forEach((parcel, index) => {
   parcelCentres[index * 3 + 2] = z;
 });
 
-/** Six corners per plot, flattened: parcel i occupies [i*18, i*18+18). */
+/**
+ * Six corners per plot, flattened: parcel i occupies [i*18, i*18+18).
+ *
+ * These come straight from the generated lattice rather than being rebuilt
+ * as regular hexagons around each centre. Equal Earth preserves area, not
+ * shape, so a plot covers more longitude than latitude once it is on the
+ * globe — drawing it regular overlapped every neighbour by about a third.
+ */
 export const parcelCorners = new Float64Array(parcels.length * 6 * 3);
 parcels.forEach((parcel, index) => {
-  for (let k = 0; k < 6; k += 1) {
-    // Flat-top hexes: first corner points east.
-    const bearing = (Math.PI / 3) * k + Math.PI / 2;
-    const [lon, lat] = destination(
-      parcel.lon,
-      parcel.lat,
-      bearing,
-      HEX_ANGULAR_RADIUS,
-    );
+  parcel.corners.forEach(([lon, lat], k) => {
     const [x, y, z] = toVector(lon, lat);
     const base = index * 18 + k * 3;
     parcelCorners[base] = x;
     parcelCorners[base + 1] = y;
     parcelCorners[base + 2] = z;
-  }
+  });
 });
 
 /** Coastline rings as unit vectors. */

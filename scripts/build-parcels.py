@@ -261,6 +261,22 @@ def main():
     for i, (fraction, x, y) in enumerate(kept, start=1):
         name, continent = next(iter(countries.hits(x, y)), ("Open Water", ""))
         lon, lat = equal_earth_inverse(x, y)
+
+        # Corners are taken from the lattice itself and then unprojected,
+        # not rebuilt as a regular hexagon on the sphere. Equal Earth
+        # preserves area, not shape, so a hex that is regular here is wider
+        # in longitude than in latitude once it is on the globe — redrawing
+        # it as a regular spherical hexagon makes every plot overlap its
+        # neighbours by about a third. Unprojecting the real corners tiles
+        # exactly, which is the whole point of the grid.
+        corners = []
+        for k in range(6):
+            angle = math.pi / 3 * k
+            cx = x + radius * math.cos(angle)
+            cy = y + radius * math.sin(angle)
+            c_lon, c_lat = equal_earth_inverse(cx, cy)
+            corners.append([round(c_lon, 3), round(c_lat, 3)])
+
         parcels.append(
             {
                 "id": i,
@@ -268,6 +284,7 @@ def main():
                 "y": round(y, 5),
                 "lon": round(lon, 4),
                 "lat": round(lat, 4),
+                "corners": corners,
                 "country": name,
                 "continent": continent,
                 "land": round(fraction, 2),

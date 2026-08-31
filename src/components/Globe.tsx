@@ -42,6 +42,28 @@ interface Frame {
   sinPitch: number;
 }
 
+/*
+ * A fixed starfield behind the globe. Positions are seeded so they never
+ * flicker between frames, and held in normalised coordinates so a resize
+ * rescales them instead of reshuffling the sky.
+ */
+const STARS = (() => {
+  let state = 0x9e3779b9;
+  const random = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return Array.from({ length: 220 }, () => ({
+    x: random(),
+    y: random(),
+    r: 0.4 + random() * 1.1,
+    a: 0.12 + random() * 0.5,
+  }));
+})();
+
 /** Rotate a unit vector by yaw then pitch. Returns screen x, y and depth. */
 function project(
   vx: number,
@@ -225,24 +247,72 @@ export function Globe({
 
       ctx.clearRect(0, 0, width, height);
 
-      // The sphere itself: a dark ocean with a lit limb, so the globe reads
-      // as a body rather than a flat disc.
+      // Sky first. Stars sit behind everything and are the cheapest way to
+      // say this is a body in space rather than a circle on a page.
+      for (const star of STARS) {
+        ctx.beginPath();
+        ctx.arc(star.x * width, star.y * height, star.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(198, 224, 240, ${star.a})`;
+        ctx.fill();
+      }
+
+      // Atmosphere: a halo bleeding outward past the limb. Drawn before the
+      // sphere so the disc covers its inner half and only the glow shows.
+      const halo = ctx.createRadialGradient(
+        f.cx,
+        f.cy,
+        radius * 0.9,
+        f.cx,
+        f.cy,
+        radius * 1.28,
+      );
+      halo.addColorStop(0, "rgba(120, 175, 225, 0.30)");
+      halo.addColorStop(0.45, "rgba(120, 175, 225, 0.10)");
+      halo.addColorStop(1, "rgba(120, 175, 225, 0)");
+      ctx.beginPath();
+      ctx.arc(f.cx, f.cy, radius * 1.28, 0, Math.PI * 2);
+      ctx.fillStyle = halo;
+      ctx.fill();
+
+      // The ocean, lit from the upper left.
       const ocean = ctx.createRadialGradient(
-        f.cx - radius * 0.35,
-        f.cy - radius * 0.4,
-        radius * 0.1,
+        f.cx - radius * 0.4,
+        f.cy - radius * 0.45,
+        radius * 0.05,
         f.cx,
         f.cy,
         radius,
       );
-      ocean.addColorStop(0, "#13304f");
-      ocean.addColorStop(1, "#07101f");
+      ocean.addColorStop(0, "#17395c");
+      ocean.addColorStop(0.55, "#0e2743");
+      ocean.addColorStop(1, "#050d18");
       ctx.beginPath();
       ctx.arc(f.cx, f.cy, radius, 0, Math.PI * 2);
       ctx.fillStyle = ocean;
       ctx.fill();
-      ctx.strokeStyle = "rgba(140, 185, 230, 0.35)";
+
+      // Limb darkening: the edge falls away from the viewer, so it loses
+      // light. Without this the sphere reads as a flat disc no matter how
+      // the coastlines are drawn.
+      const limb = ctx.createRadialGradient(
+        f.cx,
+        f.cy,
+        radius * 0.55,
+        f.cx,
+        f.cy,
+        radius,
+      );
+      limb.addColorStop(0, "rgba(3, 8, 16, 0)");
+      limb.addColorStop(1, "rgba(3, 8, 16, 0.75)");
+      ctx.beginPath();
+      ctx.arc(f.cx, f.cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = limb;
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(160, 205, 245, 0.5)";
       ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(f.cx, f.cy, radius, 0, Math.PI * 2);
       ctx.stroke();
 
       ctx.lineWidth = 0.6;
@@ -253,34 +323,60 @@ export function Globe({
       ctx.strokeStyle = "rgba(140, 185, 230, 0.42)";
       for (const ring of coastVectors) strokePolyline(ring, f, true);
 
-      // Plots with no market: batched hairline outlines.
-      ctx.beginPath();
-      for (let i = 0; i < parcels.length; i += 1) {
-        if (marketFor(parcels[i].id).isLive) continue;
-        const c = project(
-          parcelCentres[i * 3],
-          parcelCentres[i * 3 + 1],
-          parcelCentres[i * 3 + 2],
-          f,
-        );
-        if (c.z <= 0.02) continue;
-        for (let k = 0; k < 6; k += 1) {
-          const base = i * 18 + k * 3;
-          const p = project(
-            parcelCorners[base],
-            parcelCorners[base + 1],
-            parcelCorners[base + 2],
+      /*
+       * Plots with no market yet.
+       *
+       * Batched into three depth bands rather than stroked one by one: 999
+       * separate paths a frame is wasteful, and a single flat pass makes
+       * the sphere look like a sticker. Three passes is enough for the eye
+       * to read curvature.
+       *
+       * The hexes tile the land exactly, so filling them at a low alpha is
+       * also what gives the continents their mass — no separate landmass
+       * polygon, which would have to be clipped to the visible hemisphere
+       * and would tear at the limb.
+       */
+      const bands = [
+        { min: 0.62, fill: 0.075, stroke: 0.4 },
+        { min: 0.28, fill: 0.05, stroke: 0.26 },
+        { min: 0.02, fill: 0.028, stroke: 0.14 },
+      ];
+
+      for (let b = 0; b < bands.length; b += 1) {
+        const band = bands[b];
+        const max = b === 0 ? 2 : bands[b - 1].min;
+        ctx.beginPath();
+        for (let i = 0; i < parcels.length; i += 1) {
+          if (marketFor(parcels[i].id).isLive) continue;
+          const c = project(
+            parcelCentres[i * 3],
+            parcelCentres[i * 3 + 1],
+            parcelCentres[i * 3 + 2],
             f,
           );
-          if (k === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
+          if (c.z <= band.min || c.z > max) continue;
+          for (let k = 0; k < 6; k += 1) {
+            const base = i * 18 + k * 3;
+            const p = project(
+              parcelCorners[base],
+              parcelCorners[base + 1],
+              parcelCorners[base + 2],
+              f,
+            );
+            if (k === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+          }
+          ctx.closePath();
         }
-        ctx.closePath();
+        ctx.fillStyle = `rgba(150, 195, 235, ${band.fill})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(150, 195, 235, ${band.stroke})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
       }
-      // Fades toward the limb so the sphere keeps its curvature.
-      ctx.strokeStyle = "rgba(140, 185, 230, 0.34)";
-      ctx.lineWidth = 0.7;
-      ctx.stroke();
+
+      // How wide one plot is on screen, for sizing its halo.
+      const hexPx = Math.sin(HEX_ANGULAR_RADIUS) * f.radius;
 
       // Live markets, brightness by activity.
       for (let i = 0; i < parcels.length; i += 1) {
@@ -294,15 +390,26 @@ export function Globe({
         );
         if (c.z <= 0.02) continue;
         const heat = market.activity / peakActivity;
+        // Green once a plot has the most owners: at a glance, gold is a
+        // market that exists and green is one people are piling into.
+        const alpha = (0.35 + heat * 0.65) * Math.min(1, c.z * 2.2);
+        const rgb =
+          market.owners >= CROWDED_OWNERS ? "53, 201, 138" : "242, 167, 27";
+
+        // A halo first, so an opened plot is findable on a spinning globe
+        // before it is close enough to read.
+        const spot = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, hexPx * 5);
+        spot.addColorStop(0, `rgba(${rgb}, ${0.42 * alpha})`);
+        spot.addColorStop(1, `rgba(${rgb}, 0)`);
+        ctx.fillStyle = spot;
+        ctx.fillRect(c.x - hexPx * 5, c.y - hexPx * 5, hexPx * 10, hexPx * 10);
+
         traceHex(i, f);
-        // Green once a plot is crowded: at a glance, gold is a market that
-        // exists and green is one a lot of people are already in.
-        const alpha = (0.3 + heat * 0.7) * Math.min(1, c.z * 2.2);
-        ctx.fillStyle =
-          market.owners >= CROWDED_OWNERS
-            ? `rgba(53, 201, 138, ${alpha})`
-            : `rgba(242, 167, 27, ${alpha})`;
+        ctx.fillStyle = `rgba(${rgb}, ${alpha})`;
         ctx.fill();
+        ctx.strokeStyle = `rgba(${rgb}, ${Math.min(1, alpha + 0.3)})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
       }
 
       const emphasise = (id: number | null, colour: string, lineWidth: number) => {
