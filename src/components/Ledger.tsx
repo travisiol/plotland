@@ -1,109 +1,121 @@
-"use client";
-
-import { useMemo } from "react";
-import { parcels } from "@/components/WorldMap";
 import { Label, PreviewTag } from "@/components/ui/Label";
-import { useClaims } from "@/lib/useClaims";
+import { parcelById } from "@/lib/parcels";
+import {
+  liveMarkets,
+  peakActivity,
+  signedPercent,
+  tokenPrice,
+  usdExact,
+} from "@/lib/market";
 
 /*
- * The register of who holds what ground, by territory.
+ * A leaderboard, not a directory.
  *
- * The parcel counts are a property of the grid, not a claim about the
- * world: they say how much of the planet's land each country holds once it
- * is cut into 999 equal pieces. Russia having a hundred of them is a fact
- * about area, and it is the most interesting thing on this page.
+ * Ranking plots by what has actually traded on them is the clearest way to
+ * show that these are separate markets rather than one collection with one
+ * price: two identical hexagons sit at wildly different valuations because
+ * different numbers of people wanted in.
  */
-const ROWS = 16;
+const ROWS = 12;
+
+const rows = [...liveMarkets]
+  .sort((a, b) => b.volume24hUsd - a.volume24hUsd)
+  .slice(0, ROWS);
 
 export function Ledger() {
-  const { claimed, isPlaceholder } = useClaims();
-
-  const rows = useMemo(() => {
-    const totals = new Map<string, { total: number; taken: number }>();
-    for (const parcel of parcels) {
-      const row = totals.get(parcel.country) ?? { total: 0, taken: 0 };
-      row.total += 1;
-      if (claimed.has(parcel.id)) row.taken += 1;
-      totals.set(parcel.country, row);
-    }
-    return [...totals.entries()]
-      .map(([country, row]) => ({ country, ...row }))
-      .sort((a, b) => b.total - a.total || a.country.localeCompare(b.country));
-  }, [claimed]);
-
-  const largest = rows[0]?.total ?? 1;
-  const shown = rows.slice(0, ROWS);
-  const rest = rows.length - shown.length;
-  const restParcels = rows.slice(ROWS).reduce((sum, row) => sum + row.total, 0);
-
   return (
-    <section id="ledger" className="border-b border-rule px-4 py-16 sm:px-6">
+    <section id="ledger" className="scroll-mt-14 border-b border-rule px-4 py-16 sm:px-6">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Label className="mb-3 block">The register</Label>
-          <h2 className="type-title text-chalk">Ground by territory</h2>
+          <Label className="mb-3 block text-gold">The register</Label>
+          <h2 className="type-display text-chalk">Busiest plots</h2>
         </div>
         <div className="flex items-center gap-3">
-          {isPlaceholder && <PreviewTag />}
+          <PreviewTag />
           <p className="type-data max-w-[380px] text-chalk-muted">
-            How the planet&rsquo;s land divides once it is cut into 999 equal
-            pieces. Area decides the count — nothing else does.
+            Sample data. Ranked by 24h volume — the same hexagon is worth more
+            when more people are trading it.
           </p>
         </div>
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b border-rule-strong text-left">
-            <th className="py-2 pr-4">
-              <Label>Territory</Label>
-            </th>
-            <th className="py-2 pr-4 text-right">
-              <Label>Parcels</Label>
-            </th>
-            <th className="py-2 pr-4 text-right">
-              <Label>Claimed</Label>
-            </th>
-            <th className="w-[38%] py-2">
-              <Label>Against the largest</Label>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {shown.map((row) => (
-            <tr key={row.country} className="border-b border-rule">
-              <td className="type-data py-2.5 pr-4 text-chalk">{row.country}</td>
-              <td className="type-data py-2.5 pr-4 text-right text-chalk">
-                {row.total}
-              </td>
-              <td className="type-data py-2.5 pr-4 text-right text-chalk-soft">
-                {row.taken > 0 ? row.taken : "—"}
-              </td>
-              <td className="py-2.5">
-                {/*
-                  Scaled against the largest holder, not against the whole
-                  world: at 999 parcels even Russia is 11%, so a share-of-
-                  world bar would be a row of slivers. The column says what
-                  the bar actually measures.
-                */}
-                <span className="flex h-2 w-full bg-rule/40" aria-hidden>
-                  <span
-                    className="h-full bg-claim/70"
-                    style={{ width: `${(row.total / largest) * 100}%` }}
-                  />
-                </span>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[680px] border-collapse">
+          <thead>
+            <tr className="border-b border-rule-strong text-left">
+              <th className="py-2 pr-4">
+                <Label>Plot</Label>
+              </th>
+              <th className="py-2 pr-4">
+                <Label>Territory</Label>
+              </th>
+              <th className="py-2 pr-4 text-right">
+                <Label>Price</Label>
+              </th>
+              <th className="py-2 pr-4 text-right">
+                <Label>24h</Label>
+              </th>
+              <th className="py-2 pr-4 text-right">
+                <Label>Owners</Label>
+              </th>
+              <th className="py-2 pr-4 text-right">
+                <Label>24h volume</Label>
+              </th>
+              <th className="w-[22%] py-2">
+                <Label>Activity</Label>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((market) => {
+              const parcel = parcelById(market.id);
+              return (
+                <tr key={market.id} className="border-b border-rule">
+                  <td className="type-data py-2.5 pr-4 text-gold">
+                    #{String(market.id).padStart(3, "0")}
+                  </td>
+                  <td className="type-data py-2.5 pr-4 text-chalk">
+                    {parcel?.country ?? "—"}
+                  </td>
+                  <td className="type-data py-2.5 pr-4 text-right text-chalk">
+                    {tokenPrice(market.priceUsd)}
+                  </td>
+                  <td
+                    className={`type-data py-2.5 pr-4 text-right ${
+                      market.change24h >= 0 ? "text-gain" : "text-loss"
+                    }`}
+                  >
+                    {signedPercent(market.change24h)}
+                  </td>
+                  <td className="type-data py-2.5 pr-4 text-right text-chalk-soft">
+                    {market.owners}
+                  </td>
+                  <td className="type-data py-2.5 pr-4 text-right text-chalk">
+                    {usdExact(market.volume24hUsd)}
+                  </td>
+                  <td className="py-2.5">
+                    {/* Scaled against the busiest plot, which is what the
+                        column says it measures. */}
+                    <span className="flex h-2 w-full bg-rule/40" aria-hidden>
+                      <span
+                        className="h-full bg-gold"
+                        style={{
+                          width: `${(market.activity / peakActivity) * 100}%`,
+                        }}
+                      />
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-      {rest > 0 && (
-        <p className="type-data mt-4 text-chalk-muted">
-          And {rest} more territories holding {restParcels} parcels between
-          them.
-        </p>
-      )}
+      <p className="type-data mt-6 max-w-[70ch] text-chalk-muted">
+        Every one of these is a separate token with its own holders. Owning
+        part of one gives you nothing in any of the others.
+      </p>
     </section>
   );
 }

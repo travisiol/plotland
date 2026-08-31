@@ -23,8 +23,8 @@ export function Button({
       className={clsx(
         base,
         variant === "solid"
-          ? "bg-claim text-field-deep hover:bg-claim-deep disabled:bg-transparent disabled:text-chalk-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset"
-          : "text-chalk ring-1 ring-rule-strong ring-inset hover:bg-chalk hover:text-field-deep disabled:text-chalk-muted",
+          ? "bg-gold text-void hover:bg-gold-bright disabled:bg-transparent disabled:text-chalk-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset"
+          : "text-chalk ring-1 ring-rule-strong ring-inset hover:bg-chalk hover:text-void disabled:text-chalk-muted",
         className,
       )}
       {...props}
@@ -48,7 +48,7 @@ export function ButtonLink({
       href={href}
       className={clsx(
         base,
-        "bg-claim text-field-deep hover:bg-claim-deep",
+        "bg-gold text-void hover:bg-gold-bright",
         className,
       )}
     >

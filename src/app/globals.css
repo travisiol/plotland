@@ -1,48 +1,56 @@
 @import "tailwindcss";
 
 /*
- * PLOTLAND is a survey drawing, not a marketing page.
+ * PLOTLAND — one map, hundreds of independent economies.
  *
- * The direction comes from the subject's own materials: cyanotype survey
- * sheets and drafting film — white line work bitten into Prussian blue,
- * with a surveyor's chalk yellow reserved for marks made in the field. That
- * reservation is the whole system: yellow appears only where ground has
- * actually been claimed, so on a map of 999 identical hexagons colour means
- * ownership and nothing else.
+ * Deep navy ground, hex-grid map, gold reserved for value: a plot only
+ * takes colour once it has a market, and the busiest plots carry a halo.
+ * That reservation is the whole system — on a map of 999 identical
+ * hexagons, gold has to mean activity or it means nothing.
  *
- * Type is the second half of the idea. Technical drawings letter their
- * title blocks in the same hand they annotate with, so the display face
- * here IS the mono — set large, tracked wide, in caps. A proper display
- * face would have been the safer call and a less honest one.
+ * Display type is heavy and wide with a gold outline, the way a game
+ * wordmark is built; data type is mono, so numbers read as a trading
+ * dashboard rather than as marketing copy. The split is deliberate: the
+ * loud voice sells the world, the quiet one reports on it.
  */
 :root {
-  --field: #0d2a3e;
-  --field-deep: #081d2c;
-  --field-raised: #14384f;
+  --void: #081426;
+  --field: #0d2039;
+  --field-raised: #122a48;
+  --field-line: #1b3a5e;
 
-  --chalk: #e6f0f6;
-  --chalk-soft: #9db8c9;
-  --chalk-muted: #6d8ba0;
+  --chalk: #ffffff;
+  --chalk-soft: #b6c9dd;
+  --chalk-muted: #7d97b3;
 
-  --claim: #f2c14e;
-  --claim-deep: #d8a52f;
+  --gold: #f2a71b;
+  --gold-bright: #ffc85a;
+  --gold-deep: #b87708;
 
-  --rule: rgba(198, 224, 240, 0.22);
-  --rule-strong: rgba(198, 224, 240, 0.42);
+  --rule: rgba(140, 185, 230, 0.16);
+  --rule-strong: rgba(140, 185, 230, 0.34);
+
+  --gain: #35c98a;
+  --loss: #e0603f;
 }
 
 @theme inline {
+  --color-void: var(--void);
   --color-field: var(--field);
-  --color-field-deep: var(--field-deep);
   --color-field-raised: var(--field-raised);
+  --color-field-line: var(--field-line);
   --color-chalk: var(--chalk);
   --color-chalk-soft: var(--chalk-soft);
   --color-chalk-muted: var(--chalk-muted);
-  --color-claim: var(--claim);
-  --color-claim-deep: var(--claim-deep);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-deep: var(--gold-deep);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
 
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
   --font-mono:
     "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-sans:
@@ -51,50 +59,82 @@
 
 html {
   scroll-behavior: smooth;
-  background: var(--field);
+  background: var(--void);
 }
 
 body {
-  background: var(--field);
+  background: var(--void);
   color: var(--chalk);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: var(--claim);
-  color: var(--field-deep);
+  background: var(--gold);
+  color: var(--void);
 }
 
-/* Title-block lettering: mono, caps, tracked out, set large. */
+/* ---- Type ------------------------------------------------------------ */
+
+.type-hero {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(44px, 9vw, 116px);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+/*
+ * The wordmark's gold keyline, lifted from the brand banner. Painted with
+ * paint-order so the stroke sits behind the glyph and the white stays
+ * white — a plain text-stroke would eat into the letterforms.
+ */
+.wordmark-outline {
+  -webkit-text-stroke: 6px var(--gold);
+  paint-order: stroke fill;
+}
+
+@media (max-width: 640px) {
+  .wordmark-outline {
+    -webkit-text-stroke-width: 4px;
+  }
+}
+
 .type-display {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: clamp(28px, 4.4vw, 54px);
-  line-height: 1.05;
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.6vw, 44px);
+  line-height: 1;
+  letter-spacing: -0.005em;
   text-transform: uppercase;
 }
 
 .type-title {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: clamp(18px, 2.2vw, 24px);
-  line-height: 1.15;
-  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.1;
   text-transform: uppercase;
 }
 
+/* Numbers. Always mono, always tabular — this is a market surface. */
 .type-figure {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1;
-  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-/* Every key, coordinate and readout on the sheet. */
+.type-figure-sm {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
 .type-label {
   font-family: var(--font-mono);
   font-weight: 400;
@@ -115,23 +155,35 @@ body {
 .type-body {
   font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
 }
 
-/*
- * Drafting-film grid. Faint enough to read as the sheet the drawing sits
- * on rather than as a pattern competing with it.
- */
+/* ---- Surface ---------------------------------------------------------- */
+
 .sheet-grid {
   background-image:
-    linear-gradient(to right, rgba(198, 224, 240, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(198, 224, 240, 0.05) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(to right, rgba(140, 185, 230, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(140, 185, 230, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+/* Corner dot-matrix flecks from the brand banner, used sparingly. */
+.dot-matrix {
+  background-image: radial-gradient(
+    rgba(140, 185, 230, 0.35) 1px,
+    transparent 1px
+  );
+  background-size: 9px 9px;
+}
+
+.panel {
+  background: var(--field);
+  border: 1px solid var(--rule);
 }
 
 :focus-visible {
-  outline: 2px solid var(--claim);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 

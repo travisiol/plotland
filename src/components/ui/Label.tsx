@@ -25,11 +25,11 @@ export function PreviewTag({ className }: { className?: string }) {
   return (
     <span
       className={clsx(
-        "type-label inline-flex items-center gap-1.5 border border-claim/40 bg-claim/10 px-2 py-1 text-claim",
+        "type-label inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2 py-1 text-gold",
         className,
       )}
     >
-      <span className="h-1.5 w-1.5 bg-claim" />
+      <span className="h-1.5 w-1.5 bg-gold" />
       Pre-launch
     </span>
   );

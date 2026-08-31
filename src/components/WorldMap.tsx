@@ -2,43 +2,30 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clsx } from "clsx";
-import parcelData from "@/data/parcels.json";
-import coastlineData from "@/data/coastline.json";
+import {
+  HEX_ANGLES,
+  HEX_RADIUS,
+  bounds,
+  coastRings,
+  parcels,
+  type Parcel,
+} from "@/lib/parcels";
+import { marketFor, peakActivity, tokenPrice, usd } from "@/lib/market";
 
 /*
  * The map is the product.
  *
- * It draws the world's coastline and the 999 hex parcels laid over it in
- * one equal-area projection, then colours only the ground that has actually
- * been claimed. It is the artwork, the proof of scarcity and the claim
- * counter at once — which is why it is worth being the only place on the
- * page that gets to use colour.
- *
- * Geometry comes precomputed from scripts/build-parcels.py; nothing here
- * projects or fetches anything at runtime.
+ * Every hexagon is a plot with its own token and its own market. A plot
+ * with no market yet is drawn as an empty outline; one that trades burns
+ * gold in proportion to its activity, and the busiest carry a halo. Gold
+ * is spent nowhere else on the page, so on a map of 999 identical shapes
+ * colour reads as one thing only: this is where something is happening.
  */
 
-export interface Parcel {
-  id: number;
-  x: number;
-  y: number;
-  country: string;
-  continent: string;
-  land: number;
-}
+export type { Parcel };
+export { parcels };
 
-export const parcels = parcelData.parcels as Parcel[];
-const coastRings = coastlineData.rings as [number, number][][];
-const [minX, minY, maxX, maxY] = parcelData.bounds as [
-  number,
-  number,
-  number,
-  number,
-];
-const HEX_RADIUS = parcelData.hexRadius as number;
-
-/** Flat-top hex: vertices every 60° starting at 0°. */
-const HEX_ANGLES = [0, 1, 2, 3, 4, 5].map((k) => (Math.PI / 3) * k);
+const [minX, minY, maxX, maxY] = bounds;
 
 interface Layout {
   scale: number;
@@ -47,12 +34,10 @@ interface Layout {
 }
 
 export function WorldMap({
-  claimed,
   selectedId,
   onSelect,
   className,
 }: {
-  claimed: Set<number>;
   selectedId: number | null;
   onSelect: (parcel: Parcel | null) => void;
   className?: string;
@@ -61,7 +46,7 @@ export function WorldMap({
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
 
-  // Spatial hash so pointer hit-testing doesn't walk all 999 parcels.
+  // Spatial hash so pointer hit-testing doesn't walk all 999 plots.
   const buckets = useMemo(() => {
     const cell = HEX_RADIUS * 2;
     const map = new Map<string, Parcel[]>();
@@ -74,7 +59,7 @@ export function WorldMap({
     return { cell, map };
   }, []);
 
-  const layout = useMemo(() => {
+  const layout = useMemo<Layout | null>(() => {
     if (size.width === 0 || size.height === 0) return null;
     const pad = HEX_RADIUS * 1.4;
     const worldW = maxX - minX + pad * 2;
@@ -85,7 +70,7 @@ export function WorldMap({
     return {
       scale,
       offsetX: (size.width - drawnW) / 2 - minX * scale,
-      // Sits slightly high so the lower margin can carry the title block.
+      // Sits slightly high so the lower margin can carry the readout strip.
       offsetY: (size.height - drawnH) * 0.42 + maxY * scale,
     };
   }, [size]);
@@ -128,13 +113,13 @@ export function WorldMap({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const observer = new ResizeObserver(() => {
+    const measure = () => {
       const rect = canvas.getBoundingClientRect();
       setSize({ width: rect.width, height: rect.height });
-    });
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(canvas);
-    const rect = canvas.getBoundingClientRect();
-    setSize({ width: rect.width, height: rect.height });
+    measure();
     return () => observer.disconnect();
   }, []);
 
@@ -150,8 +135,8 @@ export function WorldMap({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, size.width, size.height);
 
-    // Land first, as a flat tint. It is the ground the parcels sit on, so
-    // it must never compete with them.
+    // Landmass underneath, flat. It is the ground the markets sit on and
+    // must never compete with them.
     ctx.beginPath();
     for (const ring of coastRings) {
       ring.forEach(([x, y], index) => {
@@ -161,9 +146,9 @@ export function WorldMap({
       });
       ctx.closePath();
     }
-    ctx.fillStyle = "rgba(198, 224, 240, 0.06)";
+    ctx.fillStyle = "rgba(140, 185, 230, 0.07)";
     ctx.fill("evenodd");
-    ctx.strokeStyle = "rgba(198, 224, 240, 0.40)";
+    ctx.strokeStyle = "rgba(140, 185, 230, 0.30)";
     ctx.lineWidth = 0.7;
     ctx.stroke();
 
@@ -179,10 +164,10 @@ export function WorldMap({
       ctx.closePath();
     };
 
-    // Unclaimed parcels: one batched path of hairline outlines.
+    // Plots with no market yet: one batched path of hairlines.
     ctx.beginPath();
     for (const parcel of parcels) {
-      if (claimed.has(parcel.id)) continue;
+      if (marketFor(parcel.id).isLive) continue;
       const { px, py } = project(parcel.x, parcel.y, layout);
       HEX_ANGLES.forEach((angle, index) => {
         const hx = px + Math.cos(angle) * r * 0.92;
@@ -192,16 +177,33 @@ export function WorldMap({
       });
       ctx.closePath();
     }
-    ctx.strokeStyle = "rgba(198, 224, 240, 0.22)";
+    ctx.strokeStyle = "rgba(140, 185, 230, 0.26)";
     ctx.lineWidth = 0.6;
     ctx.stroke();
 
-    // Claimed ground — the only colour on the sheet.
-    ctx.fillStyle = "#f2c14e";
+    // Halo under the busiest plots — drawn first so the hex sits on top.
     for (const parcel of parcels) {
-      if (!claimed.has(parcel.id)) continue;
+      const market = marketFor(parcel.id);
+      if (!market.isLive) continue;
+      const heat = market.activity / peakActivity;
+      if (heat < 0.55) continue;
+      const { px, py } = project(parcel.x, parcel.y, layout);
+      const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 4.2);
+      glow.addColorStop(0, `rgba(242, 167, 27, ${0.3 * heat})`);
+      glow.addColorStop(1, "rgba(242, 167, 27, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(px - r * 4.2, py - r * 4.2, r * 8.4, r * 8.4);
+    }
+
+    // Live markets. Brightness carries activity, so the map reads as a
+    // heat map of where trading is actually happening.
+    for (const parcel of parcels) {
+      const market = marketFor(parcel.id);
+      if (!market.isLive) continue;
+      const heat = market.activity / peakActivity;
       const { px, py } = project(parcel.x, parcel.y, layout);
       traceHex(px, py, r * 0.92);
+      ctx.fillStyle = `rgba(242, 167, 27, ${0.22 + heat * 0.78})`;
       ctx.fill();
     }
 
@@ -210,59 +212,84 @@ export function WorldMap({
       const parcel = parcels.find((p) => p.id === id);
       if (!parcel) return;
       const { px, py } = project(parcel.x, parcel.y, layout);
-      traceHex(px, py, r * 0.92);
+      traceHex(px, py, r * 1.5);
       ctx.strokeStyle = colour;
       ctx.lineWidth = width;
       ctx.stroke();
     };
 
-    emphasise(hoveredId, "rgba(230, 240, 246, 0.65)", 1.4);
-    emphasise(selectedId, "#e6f0f6", 2);
-  }, [claimed, hoveredId, selectedId, layout, size, project]);
+    emphasise(hoveredId, "rgba(255, 255, 255, 0.55)", 1.2);
+    emphasise(selectedId, "#ffffff", 2);
+  }, [hoveredId, selectedId, layout, size, project]);
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!layout) return;
+  const pointerParcel = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!layout) return null;
     const rect = event.currentTarget.getBoundingClientRect();
-    const parcel = findParcelAt(
+    return findParcelAt(
       event.clientX - rect.left,
       event.clientY - rect.top,
       layout,
     );
-    setHoveredId(parcel?.id ?? null);
-  };
-
-  const handleClick = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!layout) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const parcel = findParcelAt(
-      event.clientX - rect.left,
-      event.clientY - rect.top,
-      layout,
-    );
-    onSelect(parcel);
   };
 
   const hovered = hoveredId
     ? (parcels.find((p) => p.id === hoveredId) ?? null)
     : null;
+  const hoveredMarket = hovered ? marketFor(hovered.id) : null;
 
   return (
     <div className={clsx("relative sheet-grid", className)}>
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={`World map of ${parcels.length} plots, each with its own market`}
+        className="h-full w-full cursor-crosshair touch-none"
+        onPointerMove={(event) => setHoveredId(pointerParcel(event)?.id ?? null)}
+        onPointerLeave={() => setHoveredId(null)}
+        onClick={(event) => onSelect(pointerParcel(event))}
+      />
+
+      {hovered && hoveredMarket && (
+        <div className="pointer-events-none absolute left-4 top-4 border border-rule-strong bg-void/95 px-3 py-2">
+          <div className="flex items-baseline gap-3">
+            <span className="type-label text-gold">
+              Plot #{String(hovered.id).padStart(3, "0")}
+            </span>
+            <span className="type-label text-chalk-muted">
+              {hovered.country}
+            </span>
+          </div>
+          {hoveredMarket.isLive ? (
+            <dl className="mt-2 grid grid-cols-3 gap-x-5">
+              {[
+                ["Price", tokenPrice(hoveredMarket.priceUsd)],
+                ["Owners", String(hoveredMarket.owners)],
+                ["24h vol", usd(hoveredMarket.volume24hUsd)],
+              ].map(([key, value]) => (
+                <div key={key}>
+                  <dt className="type-label text-chalk-muted">{key}</dt>
+                  <dd className="type-data text-chalk">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <span className="type-data mt-1 block text-chalk-muted">
+              No market open yet
+            </span>
+          )}
+        </div>
+      )}
+
       {/*
-        Title strip. Every survey drawing carries a title block, and it is
-        the honest place to state what this map actually is: which
-        projection, which source, how the ground was divided. It runs along
-        the bottom margin rather than sitting in a corner because the
-        drawing has no spare corner — Antarctica reaches the full width of
-        the sheet, and it holds 97 parcels worth not covering up.
+        Readout strip along the bottom margin. It runs full width rather
+        than sitting in a corner because Antarctica reaches the edge of the
+        sheet and holds 97 plots worth not covering up.
       */}
       <dl className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-rule px-4 py-2 sm:flex">
         {[
-          ["Sheet", "01 of 01"],
+          ["Grid", `${parcels.length} plots`],
           ["Projection", "Equal Earth"],
-          ["Source", "Natural Earth 110m"],
-          ["Grid", `${parcels.length} equal-area hexagons`],
-          ["Claimed", `${claimed.size} of ${parcels.length}`],
+          ["Key", "Gold = open market · brighter = more activity"],
         ].map(([key, value]) => (
           <div key={key} className="flex items-baseline gap-2">
             <dt className="type-label text-chalk-muted">{key}</dt>
@@ -270,37 +297,6 @@ export function WorldMap({
           </div>
         ))}
       </dl>
-
-      <canvas
-        ref={canvasRef}
-        role="img"
-        aria-label={`World map of ${parcels.length} parcels, ${claimed.size} claimed`}
-        className={clsx(
-          "h-full w-full touch-none",
-          hovered ? "cursor-pointer" : "cursor-crosshair",
-        )}
-        onPointerMove={handlePointerMove}
-        onPointerLeave={() => setHoveredId(null)}
-        onClick={handleClick}
-      />
-
-      {hovered && (
-        <div className="pointer-events-none absolute left-4 top-4 border border-rule-strong bg-field-deep/90 px-3 py-2">
-          <span className="type-label block text-chalk-muted">
-            Parcel {String(hovered.id).padStart(3, "0")}
-          </span>
-          <span className="type-data mt-1 block text-chalk">
-            {hovered.country}
-          </span>
-          <span
-            className={`type-label mt-1 block ${
-              claimed.has(hovered.id) ? "text-claim" : "text-chalk-muted"
-            }`}
-          >
-            {claimed.has(hovered.id) ? "Claimed" : "Open ground"}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

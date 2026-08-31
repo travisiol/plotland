@@ -1,54 +1,47 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ClaimPanel } from "@/components/ClaimPanel";
-import { WorldMap, parcels, type Parcel } from "@/components/WorldMap";
+import { useState } from "react";
+import { PlotPanel } from "@/components/PlotPanel";
+import { WorldMap, type Parcel } from "@/components/WorldMap";
 import { Label, PreviewTag } from "@/components/ui/Label";
-import { useClaims } from "@/lib/useClaims";
+import { usd, worldTotals } from "@/lib/market";
 
 /*
- * The whole working surface: map in the middle, the world's figures on one
- * side, the claim on the other. Selection lives here because both panels
- * and the map all need it.
+ * The working surface: the world's figures on one side, the map in the
+ * middle, the selected plot's own market on the other. Selection lives
+ * here because the map and the panel both need it.
  */
 export function Atlas() {
-  const { claimed, claimedCount, total, isPlaceholder } = useClaims();
   const [selected, setSelected] = useState<Parcel | null>(null);
 
-  const settled = total > 0 ? (claimedCount / total) * 100 : 0;
-
-  const territories = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const parcel of parcels) {
-      counts.set(parcel.country, (counts.get(parcel.country) ?? 0) + 1);
-    }
-    return counts;
-  }, []);
-
-  const claimedTerritories = useMemo(() => {
-    const names = new Set<string>();
-    for (const parcel of parcels) {
-      if (claimed.has(parcel.id)) names.add(parcel.country);
-    }
-    return names.size;
-  }, [claimed]);
-
   const figures = [
-    { key: "Parcels claimed", value: `${claimedCount} / ${total}` },
-    { key: "Ground settled", value: `${settled.toFixed(settled < 1 ? 1 : 0)}%` },
-    { key: "Territories entered", value: `${claimedTerritories} / ${territories.size}` },
-    { key: "Open ground", value: `${total - claimedCount}` },
+    { key: "Plots", value: `${worldTotals.totalPlots}` },
+    { key: "Markets open", value: `${worldTotals.livePlots}` },
+    { key: "Owners", value: worldTotals.owners.toLocaleString("en-US") },
+    { key: "24h volume", value: usd(worldTotals.volume24hUsd) },
+    { key: "Fees generated", value: usd(worldTotals.rewardsUsd) },
   ];
 
   return (
-    <section id="map" className="border-b border-rule">
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
-        {/* The world, in figures */}
+    <section id="map" className="scroll-mt-14 border-b border-rule">
+      {/*
+        Stated once, up front, in the same weight as the figures it governs.
+        Every number below it is generated from the plot id until the
+        contracts exist, and a market surface quietly showing invented
+        volume is the one thing here that could cost somebody money.
+      */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-rule bg-gold/10 px-4 py-2.5 sm:px-6">
+        <PreviewTag />
+        <p className="type-data text-chalk-soft">
+          Pre-launch preview. Prices, volumes, owners and fees below are sample
+          data shown to demonstrate how a plot market works — they are not live
+          figures, and no contract is deployed yet.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_360px]">
         <aside className="order-2 border-t border-rule px-4 py-5 lg:order-1 lg:border-r lg:border-t-0">
-          <div className="flex items-center justify-between gap-3">
-            <Label className="text-chalk">The world</Label>
-            {isPlaceholder && <PreviewTag />}
-          </div>
+          <Label className="text-chalk">The world</Label>
 
           <dl className="mt-4">
             {figures.map((figure) => (
@@ -59,51 +52,43 @@ export function Atlas() {
                 <dt>
                   <Label>{figure.key}</Label>
                 </dt>
-                <dd className="type-data text-chalk">{figure.value}</dd>
+                <dd className="type-figure-sm text-chalk">{figure.value}</dd>
               </div>
             ))}
           </dl>
 
-          {isPlaceholder && (
-            <p className="type-data mt-4 text-chalk-muted">
-              Seeded starting state. Every figure here reads from the
-              contract&rsquo;s own claim bitmap once claiming opens.
-            </p>
-          )}
-
           <div className="mt-6 border-t border-rule pt-4">
             <Label className="block">Key</Label>
             <div className="mt-3 flex items-center gap-2">
-              <span className="h-3 w-3 bg-claim" />
-              <span className="type-data text-chalk-soft">Claimed</span>
+              <span className="h-3 w-3 bg-gold" />
+              <span className="type-data text-chalk-soft">Market open</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="h-3 w-3 bg-gold/40" />
+              <span className="type-data text-chalk-soft">Quieter market</span>
             </div>
             <div className="mt-2 flex items-center gap-2">
               <span className="h-3 w-3 border border-rule-strong" />
-              <span className="type-data text-chalk-soft">Open ground</span>
+              <span className="type-data text-chalk-soft">No market yet</span>
             </div>
           </div>
+
+          <p className="type-data mt-6 text-chalk-muted">
+            One map, {worldTotals.totalPlots} independent economies. Each plot
+            has its own token and its own holders.
+          </p>
         </aside>
 
-        {/* The map */}
         <div className="order-1 lg:order-2">
           <WorldMap
-            claimed={claimed}
             selectedId={selected?.id ?? null}
             onSelect={setSelected}
-            // Equal Earth is roughly 2:1, so a full-height column would leave the
-            // drawing marooned in empty field. This height gives it a proper
-            // sheet margin instead — enough for the title block and the readout,
-            // not so much that the map stops being the thing you look at.
-            className="h-[52vh] min-h-[340px] w-full lg:h-[62vh] lg:min-h-[460px]"
+            className="h-[52vh] min-h-[340px] w-full lg:h-[68vh] lg:min-h-[460px]"
           />
         </div>
 
-        {/* The claim */}
         <aside className="order-3 border-t border-rule p-4 lg:border-l lg:border-t-0">
-          <ClaimPanel
-            parcel={selected}
-            isClaimed={selected !== null && claimed.has(selected.id)}
-          />
+          <PlotPanel parcel={selected} />
         </aside>
       </div>
     </section>

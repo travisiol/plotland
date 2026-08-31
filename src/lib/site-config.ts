@@ -2,11 +2,11 @@ export const siteConfig = {
   // Placeholder name — not final. Swapping this one string renames the site
   // everywhere: metadata, nav, OG image, footer.
   name: "PLOTLAND",
-  tagline: "999 equal parcels, surveyed and open to claim.",
+  tagline: "Own the map.",
   description:
-    "The world's land divided into 999 equal parcels. Claim one and it is yours to work — the map is the record of who holds what.",
+    "Buy shares of virtual land. Every plot has its own token, its own market and its own economy.",
   seoDescription:
-    "999 equal parcels of the world's land. Claim one; the map is the record.",
+    "One map, 999 independent economies. Every plot has its own token and its own holders.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://plotland.example",
   x: process.env.NEXT_PUBLIC_PLOTLAND_X ?? null,
   discord: process.env.NEXT_PUBLIC_PLOTLAND_DISCORD ?? null,
