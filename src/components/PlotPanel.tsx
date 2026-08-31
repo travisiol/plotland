@@ -3,7 +3,7 @@
 import { useConnect, useConnection } from "wagmi";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
-import type { Parcel } from "@/components/WorldMap";
+import type { Parcel } from "@/lib/parcels";
 import { gridRef, marketFor, tierFor } from "@/lib/market";
 import { canClaim } from "@/lib/site-config";
 

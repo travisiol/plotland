@@ -43,6 +43,39 @@ def equal_earth(lon_deg, lat_deg):
     return x, y
 
 
+def equal_earth_inverse(x, y, iterations=24):
+    """
+    Projected x, y -> longitude, latitude in degrees.
+
+    Equal Earth has no closed-form inverse, so theta is solved from y by
+    Newton iteration and longitude falls out of x once theta is known. The
+    globe needs real spherical coordinates; the projected grid alone cannot
+    be draped on a sphere.
+    """
+    theta = y
+    for _ in range(iterations):
+        t2 = theta * theta
+        fy = A4 * theta**9 + A3 * theta**7 + A2 * theta**3 + A1 * theta - y
+        dfy = 9 * A4 * theta**8 + 7 * A3 * theta**6 + 3 * A2 * t2 + A1
+        if dfy == 0:
+            break
+        step = fy / dfy
+        theta -= step
+        if abs(step) < 1e-13:
+            break
+    t2 = theta * theta
+    denom = 3 * (9 * A4 * t2**4 + 7 * A3 * t2**3 + 3 * A2 * t2 + A1)
+    cos_theta = math.cos(theta)
+    if abs(cos_theta) < 1e-12:
+        lon = 0.0
+    else:
+        lon = x * denom / (2 * math.sqrt(3) * cos_theta)
+    sin_lat = math.sin(theta) * 2 / math.sqrt(3)
+    sin_lat = max(-1.0, min(1.0, sin_lat))
+    lat = math.asin(sin_lat)
+    return math.degrees(lon), math.degrees(lat)
+
+
 def rings_of(geometry):
     """Yields every linear ring of a Polygon or MultiPolygon."""
     kind = geometry["type"]
@@ -120,13 +153,15 @@ def load_land():
     data = json.load(io.open(path, encoding="utf-8"))
     index = RingIndex()
     outlines = []
+    spherical = []
     for feature in data["features"]:
         for ring in rings_of(feature["geometry"]):
             projected = project_ring(ring)
             index.add(projected, True)
             outlines.append(projected)
+            spherical.append([(lon, lat) for lon, lat in ring])
     index.build()
-    return index, outlines
+    return index, outlines, spherical
 
 
 def load_countries():
@@ -183,7 +218,7 @@ def land_fraction(cx, cy, radius, land):
 
 def main():
     print("projecting land…")
-    land, outlines = load_land()
+    land, outlines, spherical = load_land()
     countries = load_countries()
 
     xs = [p[0] for ring in outlines for p in ring]
@@ -225,16 +260,26 @@ def main():
     parcels = []
     for i, (fraction, x, y) in enumerate(kept, start=1):
         name, continent = next(iter(countries.hits(x, y)), ("Open Water", ""))
+        lon, lat = equal_earth_inverse(x, y)
         parcels.append(
             {
                 "id": i,
                 "x": round(x, 5),
                 "y": round(y, 5),
+                "lon": round(lon, 4),
+                "lat": round(lat, 4),
                 "country": name,
                 "continent": continent,
                 "land": round(fraction, 2),
             }
         )
+
+    # Angular radius of a plot on the sphere, measured rather than assumed:
+    # invert two points one hex radius apart on the equator and take the
+    # longitude difference. The globe draws hexes from this.
+    lon_a, _ = equal_earth_inverse(0.0, 0.0)
+    lon_b, _ = equal_earth_inverse(radius, 0.0)
+    hex_angular_radius = math.radians(abs(lon_b - lon_a))
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -243,6 +288,7 @@ def main():
             {
                 "total": len(parcels),
                 "hexRadius": round(radius, 6),
+                "hexAngularRadius": round(hex_angular_radius, 8),
                 "bounds": [round(v, 5) for v in bounds],
                 "parcels": parcels,
             },
@@ -258,6 +304,13 @@ def main():
                 "rings": [
                     [[round(x, 4), round(y, 4)] for x, y in ring]
                     for ring in outlines
+                    if len(ring) > 3
+                ],
+                # The globe drapes the coastline on a sphere, so it needs the
+                # original spherical coordinates, not the flattened ones.
+                "lonLatRings": [
+                    [[round(lon, 3), round(lat, 3)] for lon, lat in ring]
+                    for ring in spherical
                     if len(ring) > 3
                 ],
             },

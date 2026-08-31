@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PlotPanel } from "@/components/PlotPanel";
 import { Ticker } from "@/components/Ticker";
-import { WorldMap, type Parcel } from "@/components/WorldMap";
+import { Globe, type Parcel } from "@/components/Globe";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { parcels } from "@/lib/parcels";
@@ -94,7 +94,7 @@ export function Atlas() {
 
         {/* The world */}
         <div className="relative">
-          <WorldMap
+          <Globe
             selectedId={selected?.id ?? null}
             onSelect={setSelected}
             className="h-[52vh] min-h-[340px] w-full xl:h-[calc(100vh-4rem)] xl:min-h-[560px]"

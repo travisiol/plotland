@@ -25,12 +25,12 @@ const entries = [
     a: `No — there are ${world.totalParcels} of them and each is independent. Its own token, its own price, its own holders, its own fees. Owning part of one gives you nothing in any of the others.`,
   },
   {
-    q: "Why are some plots brighter on the map?",
-    a: "Brightness is activity. A gold hexagon has a market open, and the brighter it burns the more is being traded on it. Plots drawn as empty outlines have no market yet.",
+    q: "Why are some plots brighter on the globe?",
+    a: "Brightness is activity. A gold hexagon has a market open, and the brighter it burns the more is being traded on it. Right now every plot is an empty outline, because no market has been opened anywhere.",
   },
   {
     q: "Are all plots the same size?",
-    a: "Yes. The grid is laid in an equal-area projection, so a plot in Norway covers exactly as much ground as one in Kenya. What differs is what people are willing to pay for it.",
+    a: "Yes. The grid is cut in an equal-area projection, so a plot in Norway covers exactly as much ground as one in Kenya, and each one subtends the same angle on the globe. What differs is what people are willing to pay for it.",
   },
   {
     q: "Why does Russia have a hundred plots?",
@@ -48,8 +48,8 @@ const entries = [
     a: "A few minutes after launch. Everything on this page is already wired to the contracts and turns on by itself — connect your wallet now and you are ready.",
   },
   {
-    q: "Where does the map come from?",
-    a: "Natural Earth's public-domain coastlines, projected with Equal Earth and cut into hexagons by a script in this repo. Nothing is fetched at runtime.",
+    q: "Where does the globe come from?",
+    a: "Natural Earth's public-domain coastlines. A script in this repo cuts the land into 999 hexagons using an equal-area projection, then converts every one back to real coordinates so they sit on the sphere at their true positions. Nothing is fetched at runtime.",
   },
 ] as const;
 

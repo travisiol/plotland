@@ -6,29 +6,129 @@ import coastlineData from "@/data/coastline.json";
  * scripts/build-parcels.py and committed. Nothing is projected or fetched
  * at runtime.
  *
- * This lives apart from the map component so the market layer can read the
- * plot list without importing the canvas — they would otherwise import
- * each other.
+ * The globe needs spherical coordinates, and rotating a sphere every frame
+ * means turning lon/lat into unit vectors thousands of times a second if it
+ * is done naively. So every point on the map — plot centres, the six
+ * corners of each plot, every coastline vertex — is converted to a 3D unit
+ * vector exactly once here. Drawing a frame is then a rotation and a cull,
+ * with no trigonometry per point.
  */
 
 export interface Parcel {
   id: number;
   x: number;
   y: number;
+  lon: number;
+  lat: number;
   country: string;
   continent: string;
   land: number;
 }
 
 export const parcels = parcelData.parcels as Parcel[];
-export const coastRings = coastlineData.rings as [number, number][][];
 export const bounds = parcelData.bounds as [number, number, number, number];
 export const HEX_RADIUS = parcelData.hexRadius as number;
-
-/** Flat-top hex: vertices every 60° starting at 0°. */
-export const HEX_ANGLES = [0, 1, 2, 3, 4, 5].map((k) => (Math.PI / 3) * k);
+/** Angular radius of one plot on the sphere, in radians. */
+export const HEX_ANGULAR_RADIUS = parcelData.hexAngularRadius as number;
 
 const byId = new Map(parcels.map((parcel) => [parcel.id, parcel]));
 export function parcelById(id: number): Parcel | undefined {
   return byId.get(id);
 }
+
+// ---- spherical geometry -------------------------------------------------
+
+const DEG = Math.PI / 180;
+
+/** Longitude/latitude in degrees to a unit vector. (0,0) faces the viewer. */
+function toVector(lonDeg: number, latDeg: number): [number, number, number] {
+  const lon = lonDeg * DEG;
+  const lat = latDeg * DEG;
+  const cosLat = Math.cos(lat);
+  return [cosLat * Math.sin(lon), Math.sin(lat), cosLat * Math.cos(lon)];
+}
+
+/**
+ * Walks `distance` radians from a point along a bearing, over the sphere.
+ * Used to place the six corners of a plot around its centre so hexes stay
+ * the same size wherever they sit — including at the poles, where a
+ * lat/lon offset would smear them into slivers.
+ */
+function destination(
+  lonDeg: number,
+  latDeg: number,
+  bearing: number,
+  distance: number,
+): [number, number] {
+  const lat1 = latDeg * DEG;
+  const lon1 = lonDeg * DEG;
+  const sinLat2 =
+    Math.sin(lat1) * Math.cos(distance) +
+    Math.cos(lat1) * Math.sin(distance) * Math.cos(bearing);
+  const lat2 = Math.asin(Math.max(-1, Math.min(1, sinLat2)));
+  const lon2 =
+    lon1 +
+    Math.atan2(
+      Math.sin(bearing) * Math.sin(distance) * Math.cos(lat1),
+      Math.cos(distance) - Math.sin(lat1) * sinLat2,
+    );
+  return [lon2 / DEG, lat2 / DEG];
+}
+
+/** Plot centres as unit vectors, in parcel order. */
+export const parcelCentres = new Float64Array(parcels.length * 3);
+parcels.forEach((parcel, index) => {
+  const [x, y, z] = toVector(parcel.lon, parcel.lat);
+  parcelCentres[index * 3] = x;
+  parcelCentres[index * 3 + 1] = y;
+  parcelCentres[index * 3 + 2] = z;
+});
+
+/** Six corners per plot, flattened: parcel i occupies [i*18, i*18+18). */
+export const parcelCorners = new Float64Array(parcels.length * 6 * 3);
+parcels.forEach((parcel, index) => {
+  for (let k = 0; k < 6; k += 1) {
+    // Flat-top hexes: first corner points east.
+    const bearing = (Math.PI / 3) * k + Math.PI / 2;
+    const [lon, lat] = destination(
+      parcel.lon,
+      parcel.lat,
+      bearing,
+      HEX_ANGULAR_RADIUS,
+    );
+    const [x, y, z] = toVector(lon, lat);
+    const base = index * 18 + k * 3;
+    parcelCorners[base] = x;
+    parcelCorners[base + 1] = y;
+    parcelCorners[base + 2] = z;
+  }
+});
+
+/** Coastline rings as unit vectors. */
+const lonLatRings = (coastlineData.lonLatRings ?? []) as [number, number][][];
+export const coastVectors: Float64Array[] = lonLatRings.map((ring) => {
+  const out = new Float64Array(ring.length * 3);
+  ring.forEach(([lon, lat], index) => {
+    const [x, y, z] = toVector(lon, lat);
+    out[index * 3] = x;
+    out[index * 3 + 1] = y;
+    out[index * 3 + 2] = z;
+  });
+  return out;
+});
+
+/** Graticule: meridians every 30°, parallels every 30°, as unit vectors. */
+export const graticule: Float64Array[] = (() => {
+  const lines: Float64Array[] = [];
+  for (let lon = -180; lon < 180; lon += 30) {
+    const points: number[] = [];
+    for (let lat = -80; lat <= 80; lat += 4) points.push(...toVector(lon, lat));
+    lines.push(new Float64Array(points));
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const points: number[] = [];
+    for (let lon = -180; lon <= 180; lon += 4) points.push(...toVector(lon, lat));
+    lines.push(new Float64Array(points));
+  }
+  return lines;
+})();
