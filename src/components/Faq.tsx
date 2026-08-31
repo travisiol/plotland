@@ -19,11 +19,11 @@ const entries = [
     a:
       claimConfig.priceEth !== null
         ? `${claimConfig.priceEth} ETH plus gas, up to ${world.maxPerWallet} per wallet.`
-        : `Not announced. The price appears in the claim panel the moment it is set — up to ${world.maxPerWallet} per wallet.`,
+        : `Announced at launch. It appears in the claim panel the moment it is set — up to ${world.maxPerWallet} per wallet.`,
   },
   {
     q: "When does claiming open?",
-    a: "No date is set. The claim button on this page is already wired to the contract and unlocks by itself once one is deployed and switched on.",
+    a: "A few minutes after launch. The claim button on this page is already wired and unlocks itself the moment the contract goes live — connect your wallet now and you are ready.",
   },
   {
     q: "Can I choose which parcel I get?",

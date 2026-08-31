@@ -66,9 +66,8 @@ export function Atlas() {
 
           {isPlaceholder && (
             <p className="type-data mt-4 text-chalk-muted">
-              Placeholder claims, spread across the numbering so the map reads
-              as early rather than broken. Every figure here switches to the
-              contract&rsquo;s own claim bitmap once it is deployed.
+              Seeded starting state. Every figure here reads from the
+              contract&rsquo;s own claim bitmap once claiming opens.
             </p>
           )}
 

@@ -17,9 +17,9 @@ export function Label({
 }
 
 /**
- * Marks a figure that is a placeholder rather than a reading off the
- * chain, so nothing on the sheet can be mistaken for live data before the
- * contract exists.
+ * Marks the sheet as pre-launch. The figures beside it are a seeded
+ * starting state, not readings off the chain — the tag is what keeps the
+ * claim count from asserting activity that has not happened yet.
  */
 export function PreviewTag({ className }: { className?: string }) {
   return (
@@ -30,7 +30,7 @@ export function PreviewTag({ className }: { className?: string }) {
       )}
     >
       <span className="h-1.5 w-1.5 bg-claim" />
-      Preview
+      Pre-launch
     </span>
   );
 }

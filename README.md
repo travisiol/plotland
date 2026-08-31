@@ -55,18 +55,24 @@ other way round:
 If the deployed contract names these differently, that one file is the only
 thing to change.
 
-## Current state — nothing is live
+## Pre-launch state
 
-- No contract, no price, no date.
-- The map draws placeholder claims behind a `PREVIEW` tag, spread across the
-  numbering so it reads as early rather than broken. Parcels are numbered north
-  to south, so taking the first three would have put every claim in the arctic.
-- The claim button is disabled and says "Claiming not open". It enables itself
-  once a contract address, a price and `NEXT_PUBLIC_PLOTLAND_LIVE=true` all
-  exist — no code change.
-- No yield rate, holder count, floor or valuation appears anywhere. None of it
-  is decided, and inventing a figure here is the one thing on this page a
-  holder could actually be hurt by.
+The site ships before the contract does, so it runs entirely on env vars:
+
+- The map draws a seeded starting state behind a `PRE-LAUNCH` tag. Those claims
+  are not on-chain — the tag is what keeps the claim count from asserting
+  activity that has not happened. They are spread across the numbering because
+  parcels run north to south, so the first three would all sit in the arctic.
+- Wallets connect. There is no contract to call yet, so the claim button itself
+  stays disabled and says "Claiming opens at launch" rather than looking live
+  and doing nothing.
+- Everything flips automatically once `NEXT_PUBLIC_PLOTLAND_CONTRACT_ADDRESS`,
+  `NEXT_PUBLIC_PLOTLAND_PRICE_ETH` and `NEXT_PUBLIC_PLOTLAND_LIVE=true` exist:
+  the tag disappears, the figures read the chain, the button claims. No code
+  change.
+- No yield rate, holder count, floor, valuation or launch date appears
+  anywhere. None of it is decided, and inventing a figure here is the one thing
+  on this page a holder could actually be hurt by.
 
 ## Setup
 

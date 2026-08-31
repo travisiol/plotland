@@ -121,13 +121,32 @@ export function ClaimPanel({
 
       <div className="border-t border-rule px-4 py-4">
         {!canClaim ? (
+          /*
+           * Pre-launch. The wallet still connects — being ready is the one
+           * useful thing to do here — but there is no contract to call yet,
+           * so the claim itself stays disabled rather than looking live and
+           * doing nothing.
+           */
           <>
-            <Button disabled className="w-full">
-              Claiming not open
-            </Button>
-            <p className="type-data mt-3 text-chalk-muted">
-              No contract is deployed and no price is set. This panel is wired
-              to both and turns on by itself once they exist.
+            {isConnected ? (
+              <Button disabled className="w-full">
+                Claiming opens at launch
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={!connectors[0] || isConnecting}
+                onClick={() =>
+                  connectors[0] && connect({ connector: connectors[0] })
+                }
+              >
+                {isConnecting ? "Connecting…" : "Connect wallet"}
+              </Button>
+            )}
+            <p className="type-data mt-3 text-chalk-soft">
+              {isConnected
+                ? "You are set. Claiming opens a few minutes after launch."
+                : "Claiming opens a few minutes after launch. Connect now so you are ready when it does."}
             </p>
           </>
         ) : !isConnected ? (
