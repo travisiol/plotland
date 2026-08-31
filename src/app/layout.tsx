@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { siteConfig } from "@/lib/site-config";
 
 // Fonts load from a runtime <link> rather than next/font/google, which
@@ -54,8 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-field text-chalk">
         <Providers>
           <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <main className="relative flex-1 overflow-hidden">{children}</main>
         </Providers>
       </body>
     </html>
