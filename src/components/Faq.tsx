@@ -43,13 +43,13 @@ export function Faq() {
   return (
     <section id="faq" className="border-b border-rule px-4 py-16 sm:px-6">
       <Label className="mb-3 block">Questions</Label>
-      <h2 className="type-title mb-10 text-ink">Before you claim</h2>
+      <h2 className="type-title mb-10 text-chalk">Before you claim</h2>
 
       <dl className="grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2">
         {entries.map((entry) => (
           <div key={entry.q} className="border-t border-rule pt-4">
-            <dt className="type-data font-semibold text-ink">{entry.q}</dt>
-            <dd className="type-body mt-2 max-w-[52ch] text-ink-soft">
+            <dt className="type-data font-semibold text-chalk">{entry.q}</dt>
+            <dd className="type-body mt-2 max-w-[52ch] text-chalk-soft">
               {entry.a}
             </dd>
           </div>

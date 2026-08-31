@@ -1,126 +1,137 @@
 @import "tailwindcss";
 
 /*
- * An atlas, not a landing page.
+ * PLOTLAND is a survey drawing, not a marketing page.
  *
- * Paper is the ground the whole thing is printed on; ink is the coastline
- * and the type; claim-orange appears ONLY where ground has actually been
- * taken. That restraint is the point — on a map where every parcel could be
- * coloured, colour has to mean ownership or it means nothing. Panels invert
- * to near-black so data reads as instrumentation laid on the sheet.
+ * The direction comes from the subject's own materials: cyanotype survey
+ * sheets and drafting film — white line work bitten into Prussian blue,
+ * with a surveyor's chalk yellow reserved for marks made in the field. That
+ * reservation is the whole system: yellow appears only where ground has
+ * actually been claimed, so on a map of 999 identical hexagons colour means
+ * ownership and nothing else.
+ *
+ * Type is the second half of the idea. Technical drawings letter their
+ * title blocks in the same hand they annotate with, so the display face
+ * here IS the mono — set large, tracked wide, in caps. A proper display
+ * face would have been the safer call and a less honest one.
  */
 :root {
-  --paper: #faf6ef;
-  --paper-raised: #ffffff;
-  --ink: #16151a;
-  --ink-soft: #55505c;
-  --ink-muted: #6f6a61;
-  --claim: #f0902b;
-  --claim-deep: #b45309;
-  --panel: #111116;
-  --panel-soft: #2c2c34;
-  --rule: rgba(22, 21, 26, 0.14);
-  --rule-strong: rgba(22, 21, 26, 0.28);
-  --land: rgba(22, 21, 26, 0.05);
+  --field: #0d2a3e;
+  --field-deep: #081d2c;
+  --field-raised: #14384f;
+
+  --chalk: #e6f0f6;
+  --chalk-soft: #9db8c9;
+  --chalk-muted: #6d8ba0;
+
+  --claim: #f2c14e;
+  --claim-deep: #d8a52f;
+
+  --rule: rgba(198, 224, 240, 0.22);
+  --rule-strong: rgba(198, 224, 240, 0.42);
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-paper-raised: var(--paper-raised);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-muted: var(--ink-muted);
+  --color-field: var(--field);
+  --color-field-deep: var(--field-deep);
+  --color-field-raised: var(--field-raised);
+  --color-chalk: var(--chalk);
+  --color-chalk-soft: var(--chalk-soft);
+  --color-chalk-muted: var(--chalk-muted);
   --color-claim: var(--claim);
   --color-claim-deep: var(--claim-deep);
-  --color-panel: var(--panel);
-  --color-panel-soft: var(--panel-soft);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
 
-  --font-display: "Archivo Black", "Helvetica Neue", Arial, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-  --radius-sm: 2px;
-  --radius-md: 4px;
+    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans:
+    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
-  background: var(--paper);
+  background: var(--field);
 }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--field);
+  color: var(--chalk);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
   background: var(--claim);
-  color: var(--ink);
+  color: var(--field-deep);
 }
 
-/*
- * Archivo Black is already the heaviest weight there is; the work left to
- * do is tightening. Display type is set tight and slightly negative-tracked
- * so it reads as a stamped heading rather than a shouted one.
- */
+/* Title-block lettering: mono, caps, tracked out, set large. */
 .type-display {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(38px, 6.2vw, 72px);
-  line-height: 0.92;
-  letter-spacing: -0.02em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(28px, 4.4vw, 54px);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .type-title {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(24px, 3vw, 34px);
-  line-height: 1;
-  letter-spacing: -0.015em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: clamp(18px, 2.2vw, 24px);
+  line-height: 1.15;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .type-figure {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 28px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 26px;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 
-/* Every label, key, coordinate and readout on the sheet. */
+/* Every key, coordinate and readout on the sheet. */
 .type-label {
   font-family: var(--font-mono);
+  font-weight: 400;
   font-size: 10px;
   line-height: 1.1;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .type-data {
   font-family: var(--font-mono);
+  font-weight: 400;
   font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: 0;
+  line-height: 1.45;
   font-variant-numeric: tabular-nums;
 }
 
 .type-body {
   font-family: var(--font-sans);
+  font-weight: 400;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
-/* Keyboard focus, legible on paper and on the inverted panels alike. */
+/*
+ * Drafting-film grid. Faint enough to read as the sheet the drawing sits
+ * on rather than as a pattern competing with it.
+ */
+.sheet-grid {
+  background-image:
+    linear-gradient(to right, rgba(198, 224, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(198, 224, 240, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
 :focus-visible {
-  outline: 2px solid var(--claim-deep);
+  outline: 2px solid var(--claim);
   outline-offset: 2px;
 }
 

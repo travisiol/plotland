@@ -27,23 +27,23 @@ export function HowItWorks() {
   return (
     <section id="how" className="border-b border-rule px-4 py-16 sm:px-6">
       <Label className="mb-3 block">How it works</Label>
-      <h2 className="type-title mb-10 text-ink">Ground, then work, then hold</h2>
+      <h2 className="type-title mb-10 text-chalk">Ground, then work, then hold</h2>
 
       <ol className="grid grid-cols-1 gap-px bg-rule md:grid-cols-3">
         {stages.map((stage) => (
-          <li key={stage.step} className="bg-paper px-0 py-6 md:px-6 md:first:pl-0">
+          <li key={stage.step} className="bg-field px-0 py-6 md:px-6 md:first:pl-0">
             <Label className="text-claim-deep">{stage.step}</Label>
-            <h3 className="type-data mt-4 text-base font-semibold text-ink">
+            <h3 className="type-data mt-4 text-base font-semibold text-chalk">
               {stage.title}
             </h3>
-            <p className="type-body mt-2 max-w-[38ch] text-ink-soft">
+            <p className="type-body mt-2 max-w-[38ch] text-chalk-soft">
               {stage.body}
             </p>
           </li>
         ))}
       </ol>
 
-      <p className="type-data mt-8 max-w-[62ch] text-ink-muted">
+      <p className="type-data mt-8 max-w-[62ch] text-chalk-muted">
         Yield rates and the list of activities are not finalised, so none are
         published here. Nothing on this page is a promise of return.
       </p>

@@ -10,7 +10,7 @@ export function Label({
   className?: string;
 }) {
   return (
-    <span className={clsx("type-label text-ink-muted", className)}>
+    <span className={clsx("type-label text-chalk-muted", className)}>
       {children}
     </span>
   );
@@ -25,11 +25,11 @@ export function PreviewTag({ className }: { className?: string }) {
   return (
     <span
       className={clsx(
-        "type-label inline-flex items-center gap-1.5 border border-claim-deep/40 bg-claim/10 px-2 py-1 text-claim-deep",
+        "type-label inline-flex items-center gap-1.5 border border-claim/40 bg-claim/10 px-2 py-1 text-claim",
         className,
       )}
     >
-      <span className="h-1.5 w-1.5 bg-claim-deep" />
+      <span className="h-1.5 w-1.5 bg-claim" />
       Preview
     </span>
   );

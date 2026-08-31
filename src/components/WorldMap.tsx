@@ -85,7 +85,8 @@ export function WorldMap({
     return {
       scale,
       offsetX: (size.width - drawnW) / 2 - minX * scale,
-      offsetY: (size.height - drawnH) / 2 + maxY * scale,
+      // Sits slightly high so the lower margin can carry the title block.
+      offsetY: (size.height - drawnH) * 0.42 + maxY * scale,
     };
   }, [size]);
 
@@ -160,9 +161,9 @@ export function WorldMap({
       });
       ctx.closePath();
     }
-    ctx.fillStyle = "rgba(22, 21, 26, 0.05)";
+    ctx.fillStyle = "rgba(198, 224, 240, 0.06)";
     ctx.fill("evenodd");
-    ctx.strokeStyle = "rgba(22, 21, 26, 0.22)";
+    ctx.strokeStyle = "rgba(198, 224, 240, 0.40)";
     ctx.lineWidth = 0.7;
     ctx.stroke();
 
@@ -191,12 +192,12 @@ export function WorldMap({
       });
       ctx.closePath();
     }
-    ctx.strokeStyle = "rgba(22, 21, 26, 0.2)";
+    ctx.strokeStyle = "rgba(198, 224, 240, 0.22)";
     ctx.lineWidth = 0.6;
     ctx.stroke();
 
     // Claimed ground — the only colour on the sheet.
-    ctx.fillStyle = "#f0902b";
+    ctx.fillStyle = "#f2c14e";
     for (const parcel of parcels) {
       if (!claimed.has(parcel.id)) continue;
       const { px, py } = project(parcel.x, parcel.y, layout);
@@ -215,8 +216,8 @@ export function WorldMap({
       ctx.stroke();
     };
 
-    emphasise(hoveredId, "rgba(22, 21, 26, 0.55)", 1.4);
-    emphasise(selectedId, "#16151a", 2);
+    emphasise(hoveredId, "rgba(230, 240, 246, 0.65)", 1.4);
+    emphasise(selectedId, "#e6f0f6", 2);
   }, [claimed, hoveredId, selectedId, layout, size, project]);
 
   const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -246,7 +247,30 @@ export function WorldMap({
     : null;
 
   return (
-    <div className={clsx("relative", className)}>
+    <div className={clsx("relative sheet-grid", className)}>
+      {/*
+        Title strip. Every survey drawing carries a title block, and it is
+        the honest place to state what this map actually is: which
+        projection, which source, how the ground was divided. It runs along
+        the bottom margin rather than sitting in a corner because the
+        drawing has no spare corner — Antarctica reaches the full width of
+        the sheet, and it holds 97 parcels worth not covering up.
+      */}
+      <dl className="pointer-events-none absolute inset-x-0 bottom-0 hidden flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-rule px-4 py-2 sm:flex">
+        {[
+          ["Sheet", "01 of 01"],
+          ["Projection", "Equal Earth"],
+          ["Source", "Natural Earth 110m"],
+          ["Grid", `${parcels.length} equal-area hexagons`],
+          ["Claimed", `${claimed.size} of ${parcels.length}`],
+        ].map(([key, value]) => (
+          <div key={key} className="flex items-baseline gap-2">
+            <dt className="type-label text-chalk-muted">{key}</dt>
+            <dd className="type-data text-chalk-soft">{value}</dd>
+          </div>
+        ))}
+      </dl>
+
       <canvas
         ref={canvasRef}
         role="img"
@@ -261,14 +285,18 @@ export function WorldMap({
       />
 
       {hovered && (
-        <div className="pointer-events-none absolute left-4 top-4 border border-rule-strong bg-paper-raised px-3 py-2">
-          <span className="type-label block text-ink-muted">
+        <div className="pointer-events-none absolute left-4 top-4 border border-rule-strong bg-field-deep/90 px-3 py-2">
+          <span className="type-label block text-chalk-muted">
             Parcel {String(hovered.id).padStart(3, "0")}
           </span>
-          <span className="type-data mt-1 block text-ink">
+          <span className="type-data mt-1 block text-chalk">
             {hovered.country}
           </span>
-          <span className="type-label mt-1 block text-ink-muted">
+          <span
+            className={`type-label mt-1 block ${
+              claimed.has(hovered.id) ? "text-claim" : "text-chalk-muted"
+            }`}
+          >
             {claimed.has(hovered.id) ? "Claimed" : "Open ground"}
           </span>
         </div>

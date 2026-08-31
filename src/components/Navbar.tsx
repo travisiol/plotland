@@ -9,7 +9,7 @@ const navLinks = [
   { href: "#faq", label: "FAQ" },
 ] as const;
 
-/** A surveyor's mark: a hexagon with a point set in it. */
+/** A survey station: the hexagon of a parcel with its point struck. */
 function Mark() {
   return (
     <svg width="16" height="18" viewBox="0 0 16 18" aria-hidden focusable="false">
@@ -19,18 +19,18 @@ function Mark() {
         stroke="currentColor"
         strokeWidth="1.4"
       />
-      <circle cx="8" cy="9" r="2.4" fill="#f0902b" />
+      <circle cx="8" cy="9" r="2.4" fill="#f2c14e" />
     </svg>
   );
 }
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-rule bg-paper/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-rule bg-field/90 backdrop-blur-sm">
       <nav className="flex h-14 items-center justify-between gap-6 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5 text-ink">
+        <Link href="/" className="flex items-center gap-2.5 text-chalk">
           <Mark />
-          <span className="type-label text-ink">{siteConfig.name}</span>
+          <span className="type-label text-chalk">{siteConfig.name}</span>
         </Link>
 
         <ul className="hidden items-center gap-7 md:flex">
@@ -38,7 +38,7 @@ export function Navbar() {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="type-label text-ink-soft transition-colors duration-150 hover:text-ink"
+                className="type-label text-chalk-soft transition-colors duration-150 hover:text-chalk"
               >
                 {link.label}
               </a>

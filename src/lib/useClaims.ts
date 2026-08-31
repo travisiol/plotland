@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useReadContract } from "wagmi";
 import { mainnet } from "wagmi/chains";
-import { decodeClaimedBitmap, landfallAbi } from "@/lib/landfallAbi";
+import { decodeClaimedBitmap, plotlandAbi } from "@/lib/plotlandAbi";
 import { claimConfig, world } from "@/lib/site-config";
 
 /**
@@ -25,7 +25,7 @@ export function useClaims() {
 
   const { data, isLoading, isError } = useReadContract({
     address: address ?? undefined,
-    abi: landfallAbi,
+    abi: plotlandAbi,
     functionName: "claimedBitmap",
     chainId: mainnet.id,
     query: { enabled: address !== null, refetchInterval: 20_000 },

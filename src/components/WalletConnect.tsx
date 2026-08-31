@@ -15,7 +15,7 @@ export function WalletConnect({ className }: { className?: string }) {
   const { mutate: switchChain, isPending: isSwitching } = useSwitchChain();
 
   const shell =
-    "type-label rounded-sm px-3 py-2 transition-colors duration-150";
+    "type-label px-3 py-2 transition-colors duration-150";
 
   if (isConnected && address) {
     if (chainId !== mainnet.id) {
@@ -24,7 +24,7 @@ export function WalletConnect({ className }: { className?: string }) {
           type="button"
           onClick={() => switchChain({ chainId: mainnet.id })}
           disabled={isSwitching}
-          className={clsx(shell, "bg-claim text-ink hover:bg-claim-deep hover:text-paper", className)}
+          className={clsx(shell, "bg-claim text-field-deep hover:bg-claim-deep", className)}
         >
           {isSwitching ? "Switching…" : "Switch to Ethereum"}
         </button>
@@ -35,7 +35,7 @@ export function WalletConnect({ className }: { className?: string }) {
         type="button"
         onClick={() => disconnect()}
         title="Disconnect wallet"
-        className={clsx(shell, "flex items-center gap-2 text-ink ring-1 ring-rule-strong ring-inset hover:bg-ink hover:text-paper", className)}
+        className={clsx(shell, "flex items-center gap-2 text-chalk ring-1 ring-rule-strong ring-inset hover:bg-chalk hover:text-field-deep", className)}
       >
         <span className="h-1.5 w-1.5 bg-claim" />
         {short(address)}
@@ -50,7 +50,7 @@ export function WalletConnect({ className }: { className?: string }) {
       type="button"
       disabled={!injectedConnector || isConnecting}
       onClick={() => injectedConnector && connect({ connector: injectedConnector })}
-      className={clsx(shell, "bg-ink text-paper hover:bg-claim hover:text-ink disabled:bg-transparent disabled:text-ink-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset", className)}
+      className={clsx(shell, "bg-chalk text-field-deep hover:bg-claim hover:text-field-deep disabled:bg-transparent disabled:text-chalk-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset", className)}
     >
       {isConnecting ? "Connecting…" : injectedConnector ? "Connect wallet" : "No wallet found"}
     </button>

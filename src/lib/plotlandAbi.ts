@@ -13,7 +13,7 @@
  * If the deployed contract names these differently, this file is the only
  * place to change.
  */
-export const landfallAbi = [
+export const plotlandAbi = [
   {
     type: "function",
     name: "claim",

@@ -46,7 +46,7 @@ export function Atlas() {
         {/* The world, in figures */}
         <aside className="order-2 border-t border-rule px-4 py-5 lg:order-1 lg:border-r lg:border-t-0">
           <div className="flex items-center justify-between gap-3">
-            <Label className="text-ink">The world</Label>
+            <Label className="text-chalk">The world</Label>
             {isPlaceholder && <PreviewTag />}
           </div>
 
@@ -59,13 +59,13 @@ export function Atlas() {
                 <dt>
                   <Label>{figure.key}</Label>
                 </dt>
-                <dd className="type-data text-ink">{figure.value}</dd>
+                <dd className="type-data text-chalk">{figure.value}</dd>
               </div>
             ))}
           </dl>
 
           {isPlaceholder && (
-            <p className="type-data mt-4 text-ink-muted">
+            <p className="type-data mt-4 text-chalk-muted">
               Placeholder claims, spread across the numbering so the map reads
               as early rather than broken. Every figure here switches to the
               contract&rsquo;s own claim bitmap once it is deployed.
@@ -76,11 +76,11 @@ export function Atlas() {
             <Label className="block">Key</Label>
             <div className="mt-3 flex items-center gap-2">
               <span className="h-3 w-3 bg-claim" />
-              <span className="type-data text-ink-soft">Claimed</span>
+              <span className="type-data text-chalk-soft">Claimed</span>
             </div>
             <div className="mt-2 flex items-center gap-2">
               <span className="h-3 w-3 border border-rule-strong" />
-              <span className="type-data text-ink-soft">Open ground</span>
+              <span className="type-data text-chalk-soft">Open ground</span>
             </div>
           </div>
         </aside>
@@ -91,7 +91,11 @@ export function Atlas() {
             claimed={claimed}
             selectedId={selected?.id ?? null}
             onSelect={setSelected}
-            className="h-[52vh] min-h-[340px] w-full lg:h-[calc(100vh-3.5rem)]"
+            // Equal Earth is roughly 2:1, so a full-height column would leave the
+            // drawing marooned in empty field. This height gives it a proper
+            // sheet margin instead — enough for the title block and the readout,
+            // not so much that the map stops being the thing you look at.
+            className="h-[52vh] min-h-[340px] w-full lg:h-[62vh] lg:min-h-[460px]"
           />
         </div>
 

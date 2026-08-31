@@ -11,8 +11,8 @@ export function Footer() {
     <footer className="px-4 py-10 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div>
-          <Label className="block text-ink">{siteConfig.name}</Label>
-          <p className="type-data mt-2 max-w-[46ch] text-ink-muted">
+          <Label className="block text-chalk">{siteConfig.name}</Label>
+          <p className="type-data mt-2 max-w-[46ch] text-chalk-muted">
             Borders and coastlines from Natural Earth, public domain.
             Projection: Equal Earth.
           </p>
@@ -26,7 +26,7 @@ export function Footer() {
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="type-label text-ink-soft transition-colors duration-150 hover:text-ink"
+                className="type-label text-chalk-soft transition-colors duration-150 hover:text-chalk"
               >
                 {link.label}
               </a>

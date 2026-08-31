@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 
-/** The surveyor's mark: a hexagon with a claimed point set in it. */
+/** A field mark: chalk yellow struck on the survey ground. */
 export default function Icon() {
   return new ImageResponse(
     (
@@ -14,7 +14,7 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#faf6ef",
+          background: "#0d2a3e",
         }}
       >
         <div
@@ -23,7 +23,7 @@ export default function Icon() {
             width: 28,
             height: 28,
             borderRadius: 14,
-            background: "#f0902b",
+            background: "#f2c14e",
           }}
         />
       </div>

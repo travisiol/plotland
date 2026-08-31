@@ -12,7 +12,7 @@ import { mainnet } from "wagmi/chains";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import type { Parcel } from "@/components/WorldMap";
-import { landfallAbi } from "@/lib/landfallAbi";
+import { plotlandAbi } from "@/lib/plotlandAbi";
 import { canClaim, claimConfig, world } from "@/lib/site-config";
 
 const priceWei =
@@ -51,7 +51,7 @@ export function ClaimPanel({
     }
     writeContract({
       address: claimConfig.contractAddress,
-      abi: landfallAbi,
+      abi: plotlandAbi,
       functionName: "claim",
       args: [BigInt(parcel.id)],
       value: priceWei,
@@ -60,14 +60,14 @@ export function ClaimPanel({
   };
 
   return (
-    <div className="border border-rule-strong bg-paper-raised">
+    <div className="border border-rule-strong bg-field-raised">
       <div className="border-b border-rule px-4 py-3">
-        <Label className="text-ink">Claim a parcel</Label>
+        <Label className="text-chalk">Claim a parcel</Label>
       </div>
 
       <div className="px-4 py-4">
         {parcel === null ? (
-          <p className="type-body text-ink-soft">
+          <p className="type-body text-chalk-soft">
             Pick any open hexagon on the map. Every parcel is the same amount
             of ground — the projection is equal-area, so a hexagon in Norway
             covers exactly what one in Kenya does.
@@ -75,10 +75,10 @@ export function ClaimPanel({
         ) : (
           <>
             <div className="flex items-baseline justify-between gap-4">
-              <span className="type-figure text-ink">
+              <span className="type-figure text-chalk">
                 {String(parcel.id).padStart(3, "0")}
               </span>
-              <Label className={isClaimed ? "text-claim-deep" : "text-ink-soft"}>
+              <Label className={isClaimed ? "text-claim-deep" : "text-chalk-soft"}>
                 {isClaimed ? "Already claimed" : "Open ground"}
               </Label>
             </div>
@@ -88,13 +88,13 @@ export function ClaimPanel({
                 <dt>
                   <Label>Territory</Label>
                 </dt>
-                <dd className="type-data text-ink">{parcel.country}</dd>
+                <dd className="type-data text-chalk">{parcel.country}</dd>
               </div>
               <div className="flex items-center justify-between py-1.5">
                 <dt>
                   <Label>Region</Label>
                 </dt>
-                <dd className="type-data text-ink">
+                <dd className="type-data text-chalk">
                   {parcel.continent || "—"}
                 </dd>
               </div>
@@ -102,7 +102,7 @@ export function ClaimPanel({
                 <dt>
                   <Label>Dry ground</Label>
                 </dt>
-                <dd className="type-data text-ink">
+                <dd className="type-data text-chalk">
                   {Math.round(parcel.land * 100)}%
                 </dd>
               </div>
@@ -110,7 +110,7 @@ export function ClaimPanel({
                 <dt>
                   <Label>Price</Label>
                 </dt>
-                <dd className="type-data text-ink">
+                <dd className="type-data text-chalk">
                   {priceWei !== null ? `${formatEther(priceWei)} ETH` : "Not set"}
                 </dd>
               </div>
@@ -125,7 +125,7 @@ export function ClaimPanel({
             <Button disabled className="w-full">
               Claiming not open
             </Button>
-            <p className="type-data mt-3 text-ink-muted">
+            <p className="type-data mt-3 text-chalk-muted">
               No contract is deployed and no price is set. This panel is wired
               to both and turns on by itself once they exist.
             </p>
@@ -165,7 +165,7 @@ export function ClaimPanel({
         )}
 
         {isSuccess && (
-          <p className="type-data mt-3 text-ink">
+          <p className="type-data mt-3 text-chalk">
             Claimed. The map will show it on the next read.
           </p>
         )}
@@ -175,7 +175,7 @@ export function ClaimPanel({
           </p>
         )}
 
-        <p className="type-label mt-4 text-ink-muted">
+        <p className="type-label mt-4 text-chalk-muted">
           Max {world.maxPerWallet} per wallet · Ethereum mainnet
         </p>
       </div>

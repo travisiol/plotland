@@ -41,11 +41,11 @@ export function Ledger() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <Label className="mb-3 block">The register</Label>
-          <h2 className="type-title text-ink">Ground by territory</h2>
+          <h2 className="type-title text-chalk">Ground by territory</h2>
         </div>
         <div className="flex items-center gap-3">
           {isPlaceholder && <PreviewTag />}
-          <p className="type-data max-w-[380px] text-ink-muted">
+          <p className="type-data max-w-[380px] text-chalk-muted">
             How the planet&rsquo;s land divides once it is cut into 999 equal
             pieces. Area decides the count — nothing else does.
           </p>
@@ -72,11 +72,11 @@ export function Ledger() {
         <tbody>
           {shown.map((row) => (
             <tr key={row.country} className="border-b border-rule">
-              <td className="type-data py-2.5 pr-4 text-ink">{row.country}</td>
-              <td className="type-data py-2.5 pr-4 text-right text-ink">
+              <td className="type-data py-2.5 pr-4 text-chalk">{row.country}</td>
+              <td className="type-data py-2.5 pr-4 text-right text-chalk">
                 {row.total}
               </td>
-              <td className="type-data py-2.5 pr-4 text-right text-ink-soft">
+              <td className="type-data py-2.5 pr-4 text-right text-chalk-soft">
                 {row.taken > 0 ? row.taken : "—"}
               </td>
               <td className="py-2.5">
@@ -88,7 +88,7 @@ export function Ledger() {
                 */}
                 <span className="flex h-2 w-full bg-rule/40" aria-hidden>
                   <span
-                    className="h-full bg-ink/70"
+                    className="h-full bg-claim/70"
                     style={{ width: `${(row.total / largest) * 100}%` }}
                   />
                 </span>
@@ -99,7 +99,7 @@ export function Ledger() {
       </table>
 
       {rest > 0 && (
-        <p className="type-data mt-4 text-ink-muted">
+        <p className="type-data mt-4 text-chalk-muted">
           And {rest} more territories holding {restParcels} parcels between
           them.
         </p>

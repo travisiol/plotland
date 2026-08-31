@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description: siteConfig.seoDescription,
-  keywords: ["parcels", "world map", "NFT", "land", "Ethereum", "equal area"],
+  keywords: ["parcels", "survey", "world map", "NFT", "land", "Ethereum", "equal area"],
   openGraph: {
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description: siteConfig.seoDescription,
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf6ef",
-  colorScheme: "light",
+  themeColor: "#0d2a3e",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -47,11 +47,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="flex min-h-full flex-col bg-paper text-ink">
+      <body className="flex min-h-full flex-col bg-field text-chalk">
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>

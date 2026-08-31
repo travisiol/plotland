@@ -6,7 +6,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
  * whole page exists for. Everything else is an outline.
  */
 const base =
-  "type-label inline-flex items-center justify-center gap-2 rounded-sm px-4 py-3 transition-colors duration-150 disabled:cursor-not-allowed";
+  "type-label inline-flex items-center justify-center gap-2 px-4 py-3 transition-colors duration-150 disabled:cursor-not-allowed";
 
 export function Button({
   children,
@@ -23,8 +23,8 @@ export function Button({
       className={clsx(
         base,
         variant === "solid"
-          ? "bg-claim text-ink hover:bg-claim-deep hover:text-paper disabled:bg-transparent disabled:text-ink-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset"
-          : "text-ink ring-1 ring-rule-strong ring-inset hover:bg-ink hover:text-paper disabled:text-ink-muted",
+          ? "bg-claim text-field-deep hover:bg-claim-deep disabled:bg-transparent disabled:text-chalk-muted disabled:ring-1 disabled:ring-rule-strong disabled:ring-inset"
+          : "text-chalk ring-1 ring-rule-strong ring-inset hover:bg-chalk hover:text-field-deep disabled:text-chalk-muted",
         className,
       )}
       {...props}
@@ -48,7 +48,7 @@ export function ButtonLink({
       href={href}
       className={clsx(
         base,
-        "bg-claim text-ink hover:bg-claim-deep hover:text-paper",
+        "bg-claim text-field-deep hover:bg-claim-deep",
         className,
       )}
     >
