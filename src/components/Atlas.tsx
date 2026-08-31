@@ -39,7 +39,7 @@ export function Atlas() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_360px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_400px]">
         <aside className="order-2 border-t border-rule px-4 py-5 lg:order-1 lg:border-r lg:border-t-0">
           <Label className="text-chalk">The world</Label>
 

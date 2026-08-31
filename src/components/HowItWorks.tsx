@@ -168,12 +168,6 @@ export function HowItWorks() {
           </li>
         ))}
       </ol>
-
-      <p className="type-data mt-8 max-w-[70ch] text-chalk-muted">
-        Fee rates and the split are not finalised, so none are published here.
-        Nothing on this page is a promise of return — a plot can lose value as
-        easily as it gains it.
-      </p>
     </section>
   );
 }

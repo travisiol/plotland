@@ -33,7 +33,7 @@ export function Footer() {
             ))}
           </div>
           <Label>
-            {claimConfig.contractAddress ?? "Contract not deployed"}
+            {claimConfig.contractAddress ?? "Coming soon"}
           </Label>
         </div>
       </div>
