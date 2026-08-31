@@ -32,6 +32,11 @@
 
   --gain: #35c98a;
   --loss: #e0603f;
+
+  /* Ownership segments. Gold is always you; the blues are everyone else,
+     so the bar reads at a glance as "my slice against the rest". */
+  --holder-near: #2f7fd0;
+  --holder-far: #6fb1e8;
 }
 
 @theme inline {
@@ -49,6 +54,8 @@
   --color-rule-strong: var(--rule-strong);
   --color-gain: var(--gain);
   --color-loss: var(--loss);
+  --color-holder-near: var(--holder-near);
+  --color-holder-far: var(--holder-far);
 
   --font-display: "Archivo Black", "Arial Black", sans-serif;
   --font-mono:
@@ -76,10 +83,19 @@ body {
 
 /* ---- Type ------------------------------------------------------------ */
 
+/*
+ * Sized against its own column, not the viewport. The wordmark sits in a
+ * 380px rail on desktop and full width when the layout stacks, so a vw
+ * clamp gets it wrong in one of those two places every time.
+ */
+.pitch {
+  container-type: inline-size;
+}
+
 .type-hero {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(44px, 9vw, 116px);
+  font-size: clamp(38px, 15cqw, 104px);
   line-height: 0.9;
   letter-spacing: -0.01em;
   text-transform: uppercase;

@@ -7,47 +7,34 @@ import { Label } from "@/components/ui/Label";
 import { OwnershipBar } from "@/components/OwnershipBar";
 import type { Parcel } from "@/components/WorldMap";
 import {
+  gridRef,
   marketFor,
   signedPercent,
+  tierFor,
   tokenPrice,
   usdExact,
 } from "@/lib/market";
 import { canClaim } from "@/lib/site-config";
 
 /*
- * What a visitor sees when they click a plot, written as a guided flow
- * rather than a dashboard dump: which plot, what its market looks like,
- * and what buying into it would actually give them.
+ * The plot card: what a visitor sees the moment they click a hexagon.
  *
- * The buy step is the teaching moment. Typing an amount and watching the
- * resulting percentage move is the fastest way to understand that you are
- * buying a share of a plot, not the plot — faster than any sentence on the
- * page, and it is why the field is there before trading is even open.
+ * Identity, then the four numbers that matter, then the ownership
+ * breakdown, then the trade. The breakdown sits above the buttons on
+ * purpose — you should have seen that this plot already has hundreds of
+ * owners before you reach anything that looks like a buy.
  */
 
 const PRESET_AMOUNTS = [50, 250, 1000] as const;
 
-function Step({
-  index,
-  title,
-  children,
-}: {
-  index: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="border-b border-rule px-5 py-5 last:border-b-0">
-      <div className="mb-4 flex items-baseline gap-2.5">
-        <span className="type-label text-gold">{index}</span>
-        <h3 className="type-title text-chalk">{title}</h3>
-      </div>
-      {children}
-    </section>
-  );
-}
+const TIER_TONE: Record<string, string> = {
+  Legendary: "border-gold text-gold",
+  Rare: "border-holder-far text-holder-far",
+  Uncommon: "border-rule-strong text-chalk-soft",
+  Common: "border-rule text-chalk-muted",
+  Unopened: "border-rule text-chalk-muted",
+};
 
-/** The right-hand rail from a claim sheet, folded under the flow. */
 function Note({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-rule px-5 py-4">
@@ -77,88 +64,118 @@ export function PlotPanel({ parcel }: { parcel: Parcel | null }) {
           wallets can hold the same plot at the same time.
         </Note>
         <Note title="What you earn">
-          Every trade on a plot generates fees, and those fees are split
-          between that plot&rsquo;s holders in proportion to what each one
-          holds. A plot nobody trades pays nothing.
+          Every trade on a plot generates fees, split between that plot&rsquo;s
+          holders in proportion to what each one holds. A plot nobody trades
+          pays nothing.
         </Note>
       </div>
     );
   }
 
   const market = marketFor(parcel.id);
+  const tier = tierFor(parcel.id);
   // Nobody holds anything until the contracts exist, so this stays honest
   // rather than showing an invented share.
   const yourShare = isConnected && canClaim ? 0 : null;
 
-  // What a given spend would buy you of this plot. Share of supply is just
-  // your spend against the plot's whole valuation.
   const projectedShare =
     market.isLive && market.marketCapUsd > 0
       ? (amount / market.marketCapUsd) * 100
       : 0;
 
-  const figures = [
-    { key: "Token price", value: tokenPrice(market.priceUsd) },
-    { key: "Market cap", value: usdExact(market.marketCapUsd) },
-    { key: "24h volume", value: usdExact(market.volume24hUsd) },
+  const stats = [
     { key: "Owners", value: String(market.owners) },
-    { key: "Fees generated", value: usdExact(market.rewardsUsd) },
     {
-      key: "Your ownership",
+      key: "Your share",
       value: yourShare === null ? "—" : `${yourShare.toFixed(2)}%`,
     },
+    { key: "24h volume", value: usdExact(market.volume24hUsd) },
+    { key: "Rewards generated", value: usdExact(market.rewardsUsd) },
   ];
 
   return (
     <div className="panel">
-      <Step index="01" title="The plot">
-        <div className="flex items-baseline justify-between gap-3">
+      <div className="px-5 py-5">
+        <div className="flex items-start justify-between gap-3">
           <span className="type-display text-chalk">
-            #{String(parcel.id).padStart(3, "0")}
+            Plot #{String(parcel.id).padStart(3, "0")}
           </span>
-          {market.isLive && (
+          <span
+            className={`type-label shrink-0 border px-2 py-1 ${TIER_TONE[tier]}`}
+          >
+            {tier}
+          </span>
+        </div>
+        <p className="type-data mt-2 text-chalk-soft">{parcel.country}</p>
+        <p className="type-data text-chalk-muted">
+          {gridRef(parcel.x, parcel.y)}
+          {market.isLive ? ` · ${tokenPrice(market.priceUsd)}` : ""}
+          {market.isLive ? (
             <span
-              className={`type-figure-sm ${
-                market.change24h >= 0 ? "text-gain" : "text-loss"
-              }`}
+              className={market.change24h >= 0 ? "text-gain" : "text-loss"}
             >
+              {" "}
               {signedPercent(market.change24h)}
             </span>
-          )}
-        </div>
-        <p className="type-data mt-2 text-chalk-soft">
-          {parcel.country}
-          {parcel.continent ? ` · ${parcel.continent}` : ""}
+          ) : null}
         </p>
-        <p className="type-body mt-3 text-chalk-muted">
-          Its own token, its own price, its own holders. Owning part of this
-          plot gives you nothing in any of the other 998.
-        </p>
-      </Step>
+      </div>
 
       {market.isLive ? (
         <>
-          <Step index="02" title="The market">
-            <dl className="grid grid-cols-2 gap-px bg-rule/40">
-              {figures.map((figure) => (
-                <div key={figure.key} className="bg-field px-3 py-3">
-                  <dt>
-                    <Label>{figure.key}</Label>
-                  </dt>
-                  <dd className="type-figure-sm mt-1.5 text-chalk">
-                    {figure.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+          <dl className="grid grid-cols-2 gap-px border-y border-rule bg-rule/40">
+            {stats.map((stat) => (
+              <div key={stat.key} className="bg-field px-4 py-3.5">
+                <dt>
+                  <Label>{stat.key}</Label>
+                </dt>
+                <dd className="type-figure-sm mt-1.5 text-chalk">
+                  {stat.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
 
-            <div className="mt-5">
-              <OwnershipBar market={market} yourShare={yourShare} />
-            </div>
-          </Step>
+          <div className="px-5 py-5">
+            <OwnershipBar market={market} yourShare={yourShare} />
+          </div>
 
-          <Step index="03" title="Your share">
-            <div className="flex flex-wrap gap-2">
+          <div className="border-t border-rule px-5 py-5">
+            {!isConnected ? (
+              <Button
+                className="w-full"
+                disabled={!connectors[0] || isConnecting}
+                onClick={() =>
+                  connectors[0] && connect({ connector: connectors[0] })
+                }
+              >
+                {isConnecting ? "Connecting…" : "Connect wallet"}
+              </Button>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Button disabled={!canClaim}>Buy plot</Button>
+                <Button variant="outline" disabled={!canClaim}>
+                  Sell
+                </Button>
+              </div>
+            )}
+            <p className="type-data mt-3 text-chalk-soft">
+              {canClaim
+                ? "Buy as much or as little of this plot as you want."
+                : "Trading opens a few minutes after launch. Connect now so you are ready."}
+            </p>
+          </div>
+
+          {/*
+            The share simulator. Watching the percentage move as the amount
+            changes is the fastest way to understand you are buying a slice
+            of a plot rather than the plot — faster than any sentence here.
+          */}
+          <div className="border-t border-rule px-5 py-5">
+            <Label className="block text-chalk-muted">
+              What would a buy get me
+            </Label>
+            <div className="mt-3 flex flex-wrap gap-2">
               {PRESET_AMOUNTS.map((preset) => (
                 <button
                   key={preset}
@@ -177,7 +194,7 @@ export function PlotPanel({ parcel }: { parcel: Parcel | null }) {
                 <span className="type-label text-chalk-muted">$</span>
                 <input
                   type="number"
-                  min={1}
+                  min={0}
                   value={amount}
                   onChange={(event) =>
                     setAmount(Math.max(0, Number(event.target.value) || 0))
@@ -187,53 +204,22 @@ export function PlotPanel({ parcel }: { parcel: Parcel | null }) {
                 />
               </label>
             </div>
-
-            <div className="mt-4 border border-rule bg-void px-4 py-3.5">
-              <Label className="block text-chalk-muted">
-                That would make you
-              </Label>
-              <p className="type-figure mt-2 text-gold">
-                {projectedShare < 0.01 && projectedShare > 0
-                  ? "<0.01%"
-                  : `${projectedShare.toFixed(2)}%`}
-                <span className="type-data ml-2 text-chalk-soft">
-                  owner of plot #{String(parcel.id).padStart(3, "0")}
-                </span>
-              </p>
-            </div>
-
-            {!isConnected ? (
-              <Button
-                className="mt-4 w-full"
-                disabled={!connectors[0] || isConnecting}
-                onClick={() =>
-                  connectors[0] && connect({ connector: connectors[0] })
-                }
-              >
-                {isConnecting ? "Connecting…" : "Connect wallet"}
-              </Button>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <Button disabled={!canClaim}>Buy plot</Button>
-                <Button variant="outline" disabled={!canClaim}>
-                  Sell
-                </Button>
-              </div>
-            )}
-
-            <p className="type-data mt-3 text-chalk-soft">
-              {canClaim
-                ? "Buy as much or as little of this plot as you want."
-                : "Trading opens a few minutes after launch. Connect now so you are ready."}
+            <p className="type-figure mt-4 text-gold">
+              {projectedShare < 0.01 && projectedShare > 0
+                ? "<0.01%"
+                : `${projectedShare.toFixed(2)}%`}
+              <span className="type-data ml-2 text-chalk-soft">
+                of plot #{String(parcel.id).padStart(3, "0")}
+              </span>
             </p>
-          </Step>
+          </div>
         </>
       ) : (
-        <Step index="02" title="No market yet">
+        <div className="border-t border-rule px-5 py-5">
           <p className="type-body text-chalk-soft">
             Nobody has opened a market on this plot. Whoever opens it first
             sets the starting supply — after that anyone can buy in alongside
-            them, and the plot starts generating fees like any other.
+            them, and it starts generating fees like any other plot.
           </p>
           {!isConnected ? (
             <Button
@@ -250,19 +236,13 @@ export function PlotPanel({ parcel }: { parcel: Parcel | null }) {
               Open this market
             </Button>
           )}
-        </Step>
+        </div>
       )}
 
       <Note title="How ownership is measured">
         Your share is the percentage of this plot&rsquo;s tokens you hold —
-        nothing else. Buy more and it rises, sell some and it falls, and the
-        number is the same one used to split the plot&rsquo;s fees.
-      </Note>
-
-      <Note title="What you earn">
-        Every buy and sell of this plot&rsquo;s token generates fees, split
-        across its holders in proportion to what each holds. Busier plot, more
-        fees to divide.
+        nothing else. Buy more and it rises, sell some and it falls, and it is
+        the same number used to split the plot&rsquo;s fees.
       </Note>
     </div>
   );

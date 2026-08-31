@@ -1,153 +1,140 @@
+import type { ReactNode } from "react";
 import { Label } from "@/components/ui/Label";
 
 /*
- * Four steps, each with a small drawn diagram rather than a paragraph.
- * The pictures do the explaining: a plot singled out of the grid, that
- * same plot cut into holder shares, a market filling up, fees flowing back
- * out in the same proportions as the split. Read in order they answer the
- * question the whole site turns on — what exactly am I buying.
+ * Four beats, each in a hex frame with a chevron between them, so the
+ * sequence reads as a chain before a word is parsed. The glyphs are drawn
+ * rather than illustrated — a flag for taking ground, a split hexagon for
+ * the share, a rising market, a coin coming back — which keeps them in the
+ * same line language as the map.
  */
 
-function Hex({ fill = "none" }: { fill?: string }) {
+function HexFrame({ children }: { children: ReactNode }) {
   return (
-    <path
-      d="M22 3 L38 12.5 V31.5 L22 41 L6 31.5 V12.5 Z"
-      fill={fill}
-      stroke="currentColor"
-      strokeWidth="1.5"
-    />
+    <span className="relative inline-flex h-20 w-[72px] items-center justify-center">
+      <svg
+        viewBox="0 0 72 80"
+        className="absolute inset-0 h-full w-full text-gold"
+        aria-hidden
+      >
+        <path
+          d="M36 2 L69 21 V59 L36 78 L3 59 V21 Z"
+          fill="rgba(242,167,27,0.08)"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+      <span className="relative text-gold">{children}</span>
+    </span>
   );
 }
 
-/** 01 — one plot singled out of the grid. */
-function PickDiagram() {
+/** 1 — a flag planted: taking a position on a plot. */
+function FlagGlyph() {
   return (
-    <svg
-      viewBox="0 0 132 46"
-      className="h-14 w-full text-chalk-muted"
-      aria-hidden
-    >
-      <g opacity="0.4">
-        <Hex />
-      </g>
-      <g transform="translate(44 0)" className="text-gold">
-        <Hex fill="rgba(242,167,27,0.85)" />
-      </g>
-      <g transform="translate(88 0)" opacity="0.4">
-        <Hex />
-      </g>
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden>
+      <path d="M8 4 V26" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M8 5 H23 L19 11 L23 17 H8 Z" fill="currentColor" />
     </svg>
   );
 }
 
-/** 02 — the same plot cut into holder shares. */
-function ShareDiagram() {
+/** 2 — one hexagon divided: the share, not the whole. */
+function ShareGlyph() {
   return (
-    <svg viewBox="0 0 132 46" className="h-14 w-full text-gold" aria-hidden>
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden>
       <defs>
-        <clipPath id="plot-hex-clip">
-          <path d="M22 3 L38 12.5 V31.5 L22 41 L6 31.5 V12.5 Z" />
+        <clipPath id="hiw-share-clip">
+          <path d="M15 2 L27 9 V21 L15 28 L3 21 V9 Z" />
         </clipPath>
       </defs>
-      <g clipPath="url(#plot-hex-clip)">
-        <rect x="6" y="3" width="32" height="14" fill="rgba(242,167,27,0.9)" />
-        <rect x="6" y="17" width="32" height="9" fill="rgba(242,167,27,0.6)" />
-        <rect x="6" y="26" width="32" height="15" fill="rgba(242,167,27,0.28)" />
-      </g>
-      <Hex />
-      <text x="54" y="20" fill="#b6c9dd" fontSize="8.5" letterSpacing="1.4">
-        ONE PLOT
-      </text>
-      <text x="54" y="32" fill="#b6c9dd" fontSize="8.5" letterSpacing="1.4">
-        MANY OWNERS
-      </text>
-    </svg>
-  );
-}
-
-/** 03 — a market filling up as more people buy in. */
-function MarketDiagram() {
-  const bars = [9, 15, 12, 22, 19, 30, 26, 38];
-  return (
-    <svg viewBox="0 0 132 46" className="h-14 w-full text-gold" aria-hidden>
-      {bars.map((height, index) => (
+      <g clipPath="url(#hiw-share-clip)">
+        <rect x="3" y="2" width="24" height="9" fill="currentColor" />
         <rect
-          key={index}
-          x={index * 16 + 3}
-          y={44 - height}
-          width="9"
-          height={height}
+          x="3"
+          y="11"
+          width="24"
+          height="17"
           fill="currentColor"
-          opacity={0.35 + index * 0.08}
+          opacity="0.3"
         />
-      ))}
+      </g>
+      <path
+        d="M15 2 L27 9 V21 L15 28 L3 21 V9 Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
     </svg>
   );
 }
 
-/** 04 — fees leaving the plot, split in the same proportions. */
-function FeesDiagram() {
-  const rows = [6, 20, 34];
+/** 3 — the market growing as more people buy in. */
+function GrowthGlyph() {
   return (
-    <svg viewBox="0 0 132 46" className="h-14 w-full text-gold" aria-hidden>
-      <Hex fill="rgba(242,167,27,0.75)" />
-      <path
-        d="M42 22 H60"
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden>
+      <rect x="3" y="18" width="5" height="9" fill="currentColor" opacity="0.5" />
+      <rect x="11" y="12" width="5" height="15" fill="currentColor" opacity="0.75" />
+      <rect x="19" y="5" width="5" height="22" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** 4 — fees coming back to the holders. */
+function RewardGlyph() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden>
+      <circle
+        cx="15"
+        cy="15"
+        r="11"
+        fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
-        strokeDasharray="3 3"
+        strokeWidth="2.4"
       />
-      {rows.map((y, index) => (
-        <g key={y} opacity={0.9 - index * 0.24}>
-          <path
-            d={"M60 22 C 72 22, 74 " + (y + 6) + ", 84 " + (y + 6)}
-            stroke="currentColor"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          <rect
-            x="86"
-            y={y + 2}
-            width={28 - index * 7}
-            height="8"
-            fill="currentColor"
-          />
-        </g>
-      ))}
+      <path
+        d="M15 8 V22 M11 11.5 H18 M11 18.5 H18"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        fill="none"
+      />
     </svg>
   );
 }
 
 const steps = [
   {
-    index: "01",
+    index: "1",
     title: "Choose a plot",
-    body: "Explore the map and pick a land you believe in. Gold plots already trade; the brighter they burn, the busier they are.",
-    Diagram: PickDiagram,
+    body: "Explore the map and find a plot you believe in.",
+    Glyph: FlagGlyph,
   },
   {
-    index: "02",
+    index: "2",
     title: "Buy a share",
-    body: "Each plot has its own token. Buy as much or as little of it as you want — you are buying a percentage, not the whole plot.",
-    Diagram: ShareDiagram,
+    body: "Purchase a share of any plot on the market — as much or as little as you want.",
+    Glyph: ShareGlyph,
   },
   {
-    index: "03",
+    index: "3",
     title: "The market grows",
-    body: "Other people buy and sell shares of that same plot. Its price and its holder count move with them.",
-    Diagram: MarketDiagram,
+    body: "Other people buy and sell the same plot. Activity and demand move its price.",
+    Glyph: GrowthGlyph,
   },
   {
-    index: "04",
+    index: "4",
     title: "Earn from activity",
-    body: "Every trade on the plot generates fees. Those fees are split between holders in proportion to what each one holds.",
-    Diagram: FeesDiagram,
+    body: "Trading fees are split between holders in proportion to what each one holds.",
+    Glyph: RewardGlyph,
   },
 ] as const;
 
 export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-14 border-b border-rule px-4 py-16 sm:px-6">
+    <section
+      id="how"
+      className="scroll-mt-16 border-b border-rule px-4 py-16 sm:px-6"
+    >
       <Label className="mb-3 block text-gold">How it works</Label>
       <h2 className="type-display mb-3 text-chalk">
         Every plot is its own economy
@@ -156,15 +143,36 @@ export function HowItWorks() {
         One map, hundreds of independent markets. Here is the whole mechanic.
       </p>
 
-      <ol className="grid grid-cols-1 gap-px bg-rule sm:grid-cols-2 xl:grid-cols-4">
-        {steps.map(({ index, title, body, Diagram }) => (
-          <li key={index} className="bg-void p-6">
-            <div className="mb-6 border border-rule bg-field p-4">
-              <Diagram />
+      <ol className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        {steps.map(({ index, title, body, Glyph }, position) => (
+          <li
+            key={index}
+            className="flex flex-1 items-start gap-6 lg:flex-col lg:items-stretch"
+          >
+            <div className="flex items-start gap-6 lg:w-full">
+              <div className="flex-1">
+                <HexFrame>
+                  <Glyph />
+                </HexFrame>
+                <div className="mt-5">
+                  <Label className="text-gold">
+                    {index} — {title}
+                  </Label>
+                  <p className="type-body mt-3 max-w-[34ch] text-chalk-soft">
+                    {body}
+                  </p>
+                </div>
+              </div>
+
+              {position < steps.length - 1 && (
+                <span
+                  aria-hidden
+                  className="type-display shrink-0 self-center text-gold/45 lg:hidden"
+                >
+                  ›
+                </span>
+              )}
             </div>
-            <Label className="text-gold">{index}</Label>
-            <h3 className="type-title mt-3 text-chalk">{title}</h3>
-            <p className="type-body mt-3 text-chalk-soft">{body}</p>
           </li>
         ))}
       </ol>

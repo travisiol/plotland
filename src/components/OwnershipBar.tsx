@@ -1,14 +1,16 @@
 import { Label } from "@/components/ui/Label";
-import { percent, type PlotMarket } from "@/lib/market";
+import { ownershipSplit, percent, type PlotMarket } from "@/lib/market";
 
 /*
  * The single most important thing on the page to get across: a plot is not
  * bought whole. It is split between however many wallets hold its token,
  * and this bar is what says so at a glance.
  *
- * "You" is its own row and reads 0 until the visitor actually holds
- * something — showing a stranger a share they do not own would undo the
- * one idea the bar exists to teach.
+ * Gold is always your slice, the blues are everyone else, so the shape
+ * reads as "mine against the rest" before a single number is parsed. Your
+ * slice stays at zero until you actually hold something — showing a
+ * stranger a share they do not own would undo the one idea the bar exists
+ * to teach.
  */
 export function OwnershipBar({
   market,
@@ -20,27 +22,22 @@ export function OwnershipBar({
 }) {
   if (!market.isLive) return null;
 
-  const [first = 0, second = 0, third = 0] = market.topHolders;
-  const others = Math.max(0, 100 - first - second - third);
+  const split = ownershipSplit(market, yourShare ?? 0);
 
   const segments = [
-    { key: "Owner #1", value: first, tone: "bg-gold" },
-    { key: "Owner #2", value: second, tone: "bg-gold/70" },
-    { key: "Owner #3", value: third, tone: "bg-gold/45" },
-    { key: `Others (${Math.max(0, market.owners - 3)})`, value: others, tone: "bg-chalk/15" },
+    { key: "You", value: split.you, tone: "bg-gold" },
+    { key: "Top 10 owners", value: split.topTen, tone: "bg-holder-near" },
+    { key: "Other owners", value: split.others, tone: "bg-holder-far" },
   ];
 
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <Label className="text-chalk">Plot ownership</Label>
-        <Label>{market.owners} owners</Label>
-      </div>
+      <Label className="block text-chalk-muted">Ownership breakdown</Label>
 
       <div
-        className="mt-3 flex h-3 w-full overflow-hidden border border-rule"
+        className="mt-3 flex h-2.5 w-full overflow-hidden"
         role="img"
-        aria-label={`Ownership split across ${market.owners} owners: largest holder ${percent(first)}`}
+        aria-label={`Ownership split across ${market.owners} owners`}
       >
         {segments.map((segment) => (
           <span
@@ -55,27 +52,19 @@ export function OwnershipBar({
         {segments.map((segment) => (
           <div
             key={segment.key}
-            className="flex items-center justify-between border-t border-rule/60 py-1.5"
+            className="flex items-center justify-between py-1"
           >
             <dt className="flex items-center gap-2">
-              <span className={`h-2 w-2 ${segment.tone}`} />
-              <Label>{segment.key}</Label>
+              <span className={`h-2 w-2 rounded-full ${segment.tone}`} />
+              <span className="type-data text-chalk-soft">{segment.key}</span>
             </dt>
-            <dd className="type-data text-chalk-soft">
-              {percent(segment.value, 1)}
+            <dd className="type-data text-chalk">
+              {segment.key === "You" && yourShare === null
+                ? "—"
+                : percent(segment.value)}
             </dd>
           </div>
         ))}
-
-        {/* Kept apart from the sample split above: this row is about you. */}
-        <div className="flex items-center justify-between border-t border-rule py-1.5">
-          <dt>
-            <Label className="text-gold">You</Label>
-          </dt>
-          <dd className="type-data text-chalk">
-            {yourShare === null ? "Connect wallet" : percent(yourShare, 2)}
-          </dd>
-        </div>
       </dl>
     </div>
   );

@@ -162,3 +162,44 @@ export function percent(value: number, digits = 2): string {
 export function signedPercent(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
+
+/**
+ * Rarity is not a made-up per-plot attribute — it is where the plot sits in
+ * the activity distribution. A plot is Legendary because more is happening
+ * on it than on 98% of the map, which is a fact about the market rather
+ * than a sticker.
+ */
+export type Tier = "Legendary" | "Rare" | "Uncommon" | "Common" | "Unopened";
+
+const ranked = [...liveMarkets].sort((a, b) => b.activity - a.activity);
+const rankById = new Map(ranked.map((market, index) => [market.id, index]));
+
+export function tierFor(id: number): Tier {
+  const market = marketFor(id);
+  if (!market.isLive) return "Unopened";
+  const rank = rankById.get(id) ?? ranked.length;
+  const pct = rank / Math.max(1, ranked.length);
+  if (pct < 0.02) return "Legendary";
+  if (pct < 0.12) return "Rare";
+  if (pct < 0.4) return "Uncommon";
+  return "Common";
+}
+
+/** Grid reference on the hex lattice — the plot's real position on the map. */
+export function gridRef(x: number, y: number): string {
+  const col = Math.round((x + 2.66) / 0.0567);
+  const row = Math.round((1.31 - y) / 0.0655);
+  return `X: ${col} Y: ${row}`;
+}
+
+/**
+ * The breakdown the card draws: your slice, the next largest holders, and
+ * the long tail. Splitting it this way rather than naming individual
+ * wallets is what makes "one plot, many owners" legible at a glance.
+ */
+export function ownershipSplit(market: PlotMarket, yourShare: number) {
+  const topTen = market.topHolders.reduce((sum, share) => sum + share, 0) * 1.35;
+  const cappedTop = Math.min(Math.max(0, 100 - yourShare), topTen);
+  const others = Math.max(0, 100 - yourShare - cappedTop);
+  return { you: yourShare, topTen: cappedTop, others };
+}
