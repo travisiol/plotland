@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Drawer } from "@/components/Drawer";
 import { WalletConnect } from "@/components/WalletConnect";
 import { Label } from "@/components/ui/Label";
 import { siteConfig } from "@/lib/site-config";
-import { worldTotals } from "@/lib/market";
+import { useWorld } from "@/lib/worldState";
 
 /*
  * The state of the world, carried in the header.
@@ -12,12 +14,6 @@ import { worldTotals } from "@/lib/market";
  * the point — an honest empty board says "nothing has been taken yet" far
  * better than an invented one says anything at all.
  */
-const chips = [
-  { key: "Plots", value: String(worldTotals.totalPlots) },
-  { key: "Claimed", value: `${worldTotals.claimedPct}%` },
-  { key: "Owners", value: String(worldTotals.owners) },
-] as const;
-
 /** The mark: a claim flag planted inside a plot. */
 function Mark() {
   return (
@@ -35,6 +31,14 @@ function Mark() {
 }
 
 export function Navbar() {
+  const { totals } = useWorld();
+
+  const chips = [
+    { key: "Plots", value: String(totals.totalPlots) },
+    { key: "Claimed", value: `${totals.claimedPct}%` },
+    { key: "Owners", value: totals.owners.toLocaleString("en-US") },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-void/92 backdrop-blur-sm">
       <nav className="flex h-16 items-center gap-4 px-4 sm:px-6">

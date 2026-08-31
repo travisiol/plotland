@@ -1,4 +1,6 @@
-import { worldTotals } from "@/lib/market";
+"use client";
+
+import { useWorld } from "@/lib/worldState";
 
 /*
  * The genesis strip.
@@ -8,21 +10,32 @@ import { worldTotals } from "@/lib/market";
  * the emptiness is the message — every line is true, and an untouched map
  * is a better pitch than any invented volume figure.
  */
-const lines = [
-  "Genesis — the map is unclaimed",
-  `${worldTotals.totalPlots} plots open, none taken`,
-  "Every plot is its own token and its own market",
-  "The first buyer on a plot sets its starting supply",
-  "Trading fees are split between a plot's holders",
-  "Whoever arrives first picks first",
-] as const;
-
 export function Ticker() {
+  const { isPreview, totals } = useWorld();
+
+  const lines = isPreview
+    ? [
+        "Preview — an example of a world in motion",
+        `${totals.livePlots} plots trading, ${totals.totalPlots - totals.livePlots} still open`,
+        "Green plots are the crowded ones",
+        "Nothing here is live; no contract is deployed",
+      ]
+    : [
+        "Genesis — the map is unclaimed",
+        `${totals.totalPlots} plots open, none taken`,
+        "Every plot is its own token and its own market",
+        "The first buyer on a plot sets its starting supply",
+        "Trading fees are split between a plot's holders",
+        "Whoever arrives first picks first",
+      ];
+
   return (
     <div className="flex items-stretch border-t border-rule bg-void">
       <span className="flex shrink-0 items-center gap-2 border-r border-rule px-4 py-2.5">
         <span className="h-2 w-2 bg-gold" />
-        <span className="type-label text-gold">Genesis</span>
+        <span className="type-label text-gold">
+          {isPreview ? "Preview" : "Genesis"}
+        </span>
       </span>
 
       <div className="relative flex-1 overflow-hidden">
@@ -48,7 +61,7 @@ export function Ticker() {
 
       <span className="hidden shrink-0 items-center border-l border-rule px-4 py-2.5 sm:flex">
         <span className="type-label text-chalk-muted">
-          0 / {worldTotals.totalPlots} taken
+          {totals.livePlots} / {totals.totalPlots} taken
         </span>
       </span>
     </div>

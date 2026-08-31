@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Globe } from "@/components/Globe";
 import { InfoOverlay } from "@/components/InfoOverlay";
 import { PlotPanel } from "@/components/PlotPanel";
@@ -8,7 +8,7 @@ import { Ticker } from "@/components/Ticker";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
 import { parcels, type Parcel } from "@/lib/parcels";
-import { worldTotals } from "@/lib/market";
+import { useWorld } from "@/lib/worldState";
 
 /*
  * One page: the globe, and whatever is being looked at on it.
@@ -21,12 +21,34 @@ import { worldTotals } from "@/lib/market";
 export function World() {
   const [selected, setSelected] = useState<Parcel | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [wide, setWide] = useState(true);
+  const { isPreview, setPreview, totals } = useWorld();
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setWide(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  /*
+   * The sphere moves out from under whatever is open. Side by side with the
+   * copy on a wide screen, shifted left again when a plot sheet takes the
+   * right edge, and lifted into the top half on a narrow one so the copy
+   * has the bottom to itself. Nothing is ever read on top of the globe.
+   */
+  const bias = wide ? (selected ? 0.34 : 0.66) : 0.5;
+  const biasY = wide ? 0.5 : 0.32;
 
   const pills = [
     { key: "Chain", value: "Ethereum" },
-    { key: "Markets", value: String(worldTotals.livePlots) },
-    { key: "Plots taken", value: `0 / ${worldTotals.totalPlots}` },
-    { key: "Owners", value: String(worldTotals.owners) },
+    { key: "Markets", value: String(totals.livePlots) },
+    {
+      key: "Plots taken",
+      value: `${totals.livePlots} / ${totals.totalPlots}`,
+    },
+    { key: "Owners", value: totals.owners.toLocaleString("en-US") },
   ];
 
   return (
@@ -40,14 +62,16 @@ export function World() {
         <Globe
           selectedId={selected?.id ?? null}
           onSelect={setSelected}
+          bias={bias}
+          biasY={biasY}
           className="h-full w-full"
         />
       </div>
 
       {/* The pitch, until a plot takes its place. */}
       {!selected && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-12 px-4 sm:px-8">
-          <div className="pointer-events-auto max-w-[560px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-12 px-4 sm:px-8 lg:inset-y-0 lg:right-auto lg:flex lg:w-[46%] lg:items-center">
+          <div className="pitch pointer-events-auto w-full max-w-[520px]">
             <Label className="text-gold">Genesis · Ethereum</Label>
 
             <h1 className="type-hero wordmark-outline mt-4 text-chalk">
@@ -62,8 +86,9 @@ export function World() {
               once — you included.
             </p>
             <p className="type-body mt-3 max-w-[46ch] text-chalk">
-              The globe is empty. All {worldTotals.totalPlots} plots are open,
-              none are taken, and whoever gets there first picks first.
+              {isPreview
+                ? "You are looking at an example of a world in motion. Green plots are the crowded ones."
+                : `The globe is empty. All ${totals.totalPlots} plots are open, none are taken, and whoever gets there first picks first.`}
             </p>
 
             <dl className="mt-6 flex flex-wrap gap-2">
@@ -98,6 +123,19 @@ export function World() {
               <Button variant="outline" onClick={() => setInfoOpen(true)}>
                 How it works
               </Button>
+              {/*
+                Opt-in, and it says on the tin what it is. The site's default
+                is the truth — nothing has been claimed — and this exists so
+                a visitor can see what an active plot looks like without the
+                page ever implying anyone has invested.
+              */}
+              <Button
+                variant="outline"
+                onClick={() => setPreview(!isPreview)}
+                className={isPreview ? "border-gold text-gold" : undefined}
+              >
+                {isPreview ? "Exit preview" : "Preview a live world"}
+              </Button>
             </div>
           </div>
         </div>
@@ -108,7 +146,7 @@ export function World() {
         <div className="pointer-events-none absolute inset-x-0 bottom-12 hidden px-4 sm:block sm:px-8">
           <div className="pointer-events-auto flex flex-wrap items-center gap-3">
             <Label className="text-chalk-muted">
-              Ethereum · 0 / {worldTotals.totalPlots} plots taken
+              Ethereum · {totals.livePlots} / {totals.totalPlots} plots taken
             </Label>
             <Button variant="outline" onClick={() => setInfoOpen(true)}>
               How it works

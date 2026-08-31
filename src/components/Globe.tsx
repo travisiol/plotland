@@ -11,7 +11,8 @@ import {
   parcels,
   type Parcel,
 } from "@/lib/parcels";
-import { marketFor, peakActivity } from "@/lib/market";
+import { CROWDED_OWNERS } from "@/lib/preview";
+import { useWorld } from "@/lib/worldState";
 
 /*
  * The world as a globe.
@@ -59,13 +60,24 @@ export function Globe({
   selectedId,
   onSelect,
   className,
+  /**
+   * Where the sphere sits, as fractions of the canvas. The globe is moved
+   * out from under whatever is open rather than dimmed: text over a
+   * line-drawn sphere is unreadable, and fading the globe would spoil the
+   * one thing on the page worth looking at.
+   */
+  bias = 0.5,
+  biasY = 0.5,
 }: {
   selectedId: number | null;
   onSelect: (parcel: Parcel | null) => void;
   className?: string;
+  bias?: number;
+  biasY?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState<Parcel | null>(null);
+  const { marketFor, peakActivity } = useWorld();
 
   // Rotation lives in refs, not state: it changes every frame and must not
   // drag React through a re-render each time.
@@ -78,11 +90,17 @@ export function Globe({
   // frame, the observers and every listener on each pointer move.
   const hoveredRef = useRef<Parcel | null>(null);
   const selectedRef = useRef<number | null>(null);
-
   useEffect(() => {
     hoveredRef.current = hovered;
     selectedRef.current = selectedId;
-  }, [hovered, selectedId]);
+  }, [hovered, selectedId, marketFor, peakActivity]);
+
+  const biasRef = useRef(bias);
+  const biasYRef = useRef(biasY);
+  useEffect(() => {
+    biasRef.current = bias;
+    biasYRef.current = biasY;
+  }, [bias, biasY]);
 
   const parcelAt = useCallback((px: number, py: number): Parcel | null => {
     const f = frameRef.current;
@@ -183,10 +201,20 @@ export function Globe({
     };
 
     const render = () => {
-      const radius = Math.min(width, height) * 0.42;
+      // Fit the sphere to the smaller side of wherever it has been biased
+      // to, so moving it shrinks it instead of clipping it off the canvas.
+      const roomX = Math.min(
+        width * biasRef.current,
+        width * (1 - biasRef.current),
+      );
+      const roomY = Math.min(
+        height * biasYRef.current,
+        height * (1 - biasYRef.current),
+      );
+      const radius = Math.min(roomX * 0.94, roomY * 0.94);
       const f: Frame = {
-        cx: width / 2,
-        cy: height / 2,
+        cx: width * biasRef.current,
+        cy: height * biasYRef.current,
         radius,
         cosYaw: Math.cos(yaw.current),
         sinYaw: Math.sin(yaw.current),
@@ -267,7 +295,13 @@ export function Globe({
         if (c.z <= 0.02) continue;
         const heat = market.activity / peakActivity;
         traceHex(i, f);
-        ctx.fillStyle = `rgba(242, 167, 27, ${(0.3 + heat * 0.7) * Math.min(1, c.z * 2.2)})`;
+        // Green once a plot is crowded: at a glance, gold is a market that
+        // exists and green is one a lot of people are already in.
+        const alpha = (0.3 + heat * 0.7) * Math.min(1, c.z * 2.2);
+        ctx.fillStyle =
+          market.owners >= CROWDED_OWNERS
+            ? `rgba(53, 201, 138, ${alpha})`
+            : `rgba(242, 167, 27, ${alpha})`;
         ctx.fill();
       }
 
@@ -367,7 +401,7 @@ export function Globe({
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [parcelAt]);
+  }, [parcelAt, marketFor, peakActivity]);
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -397,7 +431,7 @@ export function Globe({
           </div>
           <span className="type-data mt-1 block text-chalk-soft">
             {marketFor(hovered.id).isLive
-              ? "Market open"
+              ? `${marketFor(hovered.id).owners} owners`
               : "Open — no market yet"}
           </span>
         </div>
