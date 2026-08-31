@@ -22,7 +22,7 @@ export function World() {
   const [selected, setSelected] = useState<Parcel | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [wide, setWide] = useState(true);
-  const { isPreview, setPreview, totals, marketFor } = useWorld();
+  const { totals, marketFor } = useWorld();
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1024px)");
@@ -54,7 +54,7 @@ export function World() {
   const biasY = wide ? 0.5 : 0.32;
 
   const pills = [
-    { key: "Chain", value: "Ethereum" },
+    { key: "Chain", value: "Robinhood Chain" },
     { key: "Markets", value: String(totals.livePlots) },
     {
       key: "Plots taken",
@@ -84,9 +84,7 @@ export function World() {
       {!selected && (
         <div className="pointer-events-none absolute inset-x-0 bottom-12 px-4 sm:px-8 lg:inset-y-0 lg:right-auto lg:flex lg:w-[46%] lg:items-center">
           <div className="pitch pointer-events-auto w-full max-w-[520px]">
-            <Label className="text-gold">
-              {isPreview ? "Preview" : "Genesis"} · Ethereum
-            </Label>
+            <Label className="text-gold">Live preview · Robinhood Chain</Label>
 
             <h1 className="type-hero wordmark-outline mt-4 text-chalk">
               Plotland
@@ -100,9 +98,9 @@ export function World() {
               once — you included.
             </p>
             <p className="type-body mt-3 max-w-[46ch] text-chalk">
-              {isPreview
-                ? `An example of a world a few days old: ${totals.livePlots} plots opened, ${totals.owners} wallets in so far. Green marks the plot with the most owners.`
-                : `The globe is empty. All ${totals.totalPlots} plots are open, none are taken, and whoever gets there first picks first.`}
+              A world a few days old: {totals.livePlots} plots opened,{" "}
+              {totals.owners} wallets in so far. Green marks the plot with the
+              most owners.
             </p>
 
             <dl className="mt-6 flex flex-wrap gap-2">
@@ -130,13 +128,6 @@ export function World() {
                 a visitor can see what an active plot looks like without the
                 page ever implying anyone has invested.
               */}
-              <Button
-                variant="outline"
-                onClick={() => setPreview(!isPreview)}
-                className={isPreview ? "border-gold text-gold" : undefined}
-              >
-                {isPreview ? "Exit preview" : "Preview a live world"}
-              </Button>
             </div>
           </div>
         </div>
@@ -147,21 +138,12 @@ export function World() {
         <div className="pointer-events-none absolute inset-x-0 bottom-12 hidden px-4 sm:block sm:px-8">
           <div className="pointer-events-auto flex flex-wrap items-center gap-3">
             <Label className="text-chalk-muted">
-              {isPreview ? "Preview" : "Ethereum"} · {totals.livePlots} /{" "}
-              {totals.totalPlots} plots taken
+              Live preview · {totals.livePlots} / {totals.totalPlots} plots
+              taken
             </Label>
             <Button variant="outline" onClick={() => setInfoOpen(true)}>
               How it works
             </Button>
-            {isPreview && (
-              <Button
-                variant="outline"
-                className="border-gold text-gold"
-                onClick={() => setPreview(false)}
-              >
-                Exit preview
-              </Button>
-            )}
           </div>
         </div>
       )}

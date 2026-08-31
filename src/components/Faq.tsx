@@ -48,6 +48,10 @@ const entries = [
     a: "A few minutes after launch. Everything on this page is already wired to the contracts and turns on by itself — connect your wallet now and you are ready.",
   },
   {
+    q: "Which chain is this on?",
+    a: "Robinhood Chain. Connect any injected wallet and the site will prompt you to switch if you are somewhere else. Gas is paid in ETH.",
+  },
+  {
     q: "Where does the globe come from?",
     a: "Natural Earth's public-domain coastlines. A script in this repo cuts the land into 999 hexagons using an equal-area projection, then converts every one back to real coordinates so they sit on the sphere at their true positions. Nothing is fetched at runtime.",
   },

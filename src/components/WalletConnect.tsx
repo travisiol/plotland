@@ -1,7 +1,7 @@
 "use client";
 
 import { useConnect, useConnection, useDisconnect, useSwitchChain } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { robinhoodChain } from "@/lib/chain";
 import { clsx } from "clsx";
 
 function short(address: string) {
@@ -18,15 +18,15 @@ export function WalletConnect({ className }: { className?: string }) {
     "type-label px-3 py-2 transition-colors duration-150";
 
   if (isConnected && address) {
-    if (chainId !== mainnet.id) {
+    if (chainId !== robinhoodChain.id) {
       return (
         <button
           type="button"
-          onClick={() => switchChain({ chainId: mainnet.id })}
+          onClick={() => switchChain({ chainId: robinhoodChain.id })}
           disabled={isSwitching}
           className={clsx(shell, "bg-gold text-void hover:bg-gold-bright", className)}
         >
-          {isSwitching ? "Switching…" : "Switch to Ethereum"}
+          {isSwitching ? "Switching…" : "Switch to Robinhood Chain"}
         </button>
       );
     }

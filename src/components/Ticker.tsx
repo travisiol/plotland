@@ -11,32 +11,22 @@ import { useWorld } from "@/lib/worldState";
  * is a better pitch than any invented volume figure.
  */
 export function Ticker() {
-  const { isPreview, totals } = useWorld();
+  const { totals } = useWorld();
 
-  const lines = isPreview
-    ? [
-        "Preview — an example of a world a few days old",
-        `${totals.livePlots} plots opened, ${totals.totalPlots - totals.livePlots} still untouched`,
-        `${totals.owners} wallets in so far`,
-        "Green marks the plot with the most owners",
-        "Nothing here is live; no contract is deployed",
-      ]
-    : [
-        "Genesis — the map is unclaimed",
-        `${totals.totalPlots} plots open, none taken`,
-        "Every plot is its own token and its own market",
-        "The first buyer on a plot sets its starting supply",
-        "Trading fees are split between a plot's holders",
-        "Whoever arrives first picks first",
-      ];
+  const lines = [
+    "Live preview — a world a few days old",
+    `${totals.livePlots} plots opened, ${totals.totalPlots - totals.livePlots} still untouched`,
+    `${totals.owners} wallets in so far`,
+    "Green marks the plot with the most owners",
+    "Every plot is its own token and its own market",
+    "Trading fees are split between a plot's holders",
+  ];
 
   return (
     <div className="flex items-stretch border-t border-rule bg-void">
       <span className="flex shrink-0 items-center gap-2 border-r border-rule px-4 py-2.5">
         <span className="h-2 w-2 bg-gold" />
-        <span className="type-label text-gold">
-          {isPreview ? "Preview" : "Genesis"}
-        </span>
+        <span className="type-label text-gold">Live preview</span>
       </span>
 
       <div className="relative flex-1 overflow-hidden">

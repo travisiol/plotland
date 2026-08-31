@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: `%s — ${siteConfig.name}`,
   },
   description: siteConfig.seoDescription,
-  keywords: ["parcels", "survey", "world map", "NFT", "land", "Ethereum", "equal area"],
+  keywords: ["parcels", "survey", "world map", "NFT", "land", "Robinhood Chain", "equal area"],
   openGraph: {
     title: `${siteConfig.name} — ${siteConfig.tagline}`,
     description: siteConfig.seoDescription,

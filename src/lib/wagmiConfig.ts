@@ -1,11 +1,11 @@
 import { createConfig, http, injected } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { robinhoodChain } from "@/lib/chain";
 
 export const wagmiConfig = createConfig({
-  chains: [mainnet],
+  chains: [robinhoodChain],
   connectors: [injected()],
   transports: {
-    [mainnet.id]: http(process.env.NEXT_PUBLIC_MAINNET_RPC_URL),
+    [robinhoodChain.id]: http(),
   },
   ssr: true,
 });

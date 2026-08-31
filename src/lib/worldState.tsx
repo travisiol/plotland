@@ -44,7 +44,13 @@ interface WorldState {
 const WorldContext = createContext<WorldState | null>(null);
 
 export function WorldStateProvider({ children }: { children: ReactNode }) {
-  const [isPreview, setPreview] = useState(false);
+  /*
+   * The live preview is the view. There is no second mode to switch to and
+   * nothing to exit into — the world it shows is labelled a preview
+   * wherever it appears, which is what keeps its figures from reading as a
+   * claim about what has already happened.
+   */
+  const [isPreview, setPreview] = useState(true);
 
   const marketFor = useCallback(
     (id: number): WorldMarket =>
