@@ -32,9 +32,10 @@ export function Ledger() {
         </div>
         <div className="flex items-center gap-3">
           <PreviewTag />
-          <p className="type-data max-w-[380px] text-chalk-muted">
-            Sample data. Ranked by 24h volume — the same hexagon is worth more
-            when more people are trading it.
+          <p className="type-data max-w-[400px] text-chalk-muted">
+            Example values, shown so the board reads the way it will once it
+            is live. Real prices, volumes and owner counts land here as soon
+            as trading opens after launch.
           </p>
         </div>
       </div>
@@ -112,10 +113,16 @@ export function Ledger() {
         </table>
       </div>
 
-      <p className="type-data mt-6 max-w-[70ch] text-chalk-muted">
-        Every one of these is a separate token with its own holders. Owning
-        part of one gives you nothing in any of the others.
-      </p>
+      <div className="mt-6 border-l-2 border-gold pl-4">
+        <p className="type-data text-chalk-soft">
+          These rows are an example of how the board will look. The real
+          figures appear right after launch.
+        </p>
+        <p className="type-data mt-2 max-w-[70ch] text-chalk-muted">
+          Every one of these is a separate token with its own holders. Owning
+          part of one gives you nothing in any of the others.
+        </p>
+      </div>
     </section>
   );
 }

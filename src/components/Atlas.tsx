@@ -6,7 +6,7 @@ import { WorldMap, type Parcel } from "@/components/WorldMap";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Label, PreviewTag } from "@/components/ui/Label";
 import { parcels } from "@/lib/parcels";
-import { liveMarkets, usd, worldTotals } from "@/lib/market";
+import { liveMarkets, worldTotals } from "@/lib/market";
 
 /*
  * The whole proposition on one screen: what this is on the left, the world
@@ -35,11 +35,21 @@ export function Atlas() {
     if (match) setSelected(match);
   };
 
+  /*
+   * World-level totals are the numbers that read as a claim about how big
+   * this already is, so the two that carry money stay unstated until they
+   * can be read off the chain. Per-plot figures elsewhere are a UI
+   * demonstration and are labelled as such; these would be a boast.
+   */
   const stats = [
-    { key: "Plots", value: String(worldTotals.totalPlots) },
-    { key: "Markets open", value: String(worldTotals.livePlots) },
-    { key: "24h volume", value: usd(worldTotals.volume24hUsd) },
-    { key: "Fees generated", value: usd(worldTotals.rewardsUsd) },
+    { key: "Plots", value: String(worldTotals.totalPlots), pending: false },
+    {
+      key: "Markets open",
+      value: String(worldTotals.livePlots),
+      pending: false,
+    },
+    { key: "24h volume", value: "Coming soon", pending: true },
+    { key: "Fees generated", value: "Coming soon", pending: true },
   ];
 
   return (
@@ -90,7 +100,13 @@ export function Atlas() {
                 <dt>
                   <Label>{stat.key}</Label>
                 </dt>
-                <dd className="type-figure-sm mt-1.5 text-chalk">
+                <dd
+                  className={`mt-1.5 ${
+                    stat.pending
+                      ? "type-data text-chalk-muted"
+                      : "type-figure-sm text-chalk"
+                  }`}
+                >
                   {stat.value}
                 </dd>
               </div>
